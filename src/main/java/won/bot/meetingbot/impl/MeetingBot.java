@@ -28,19 +28,12 @@ import won.bot.framework.eventbot.listener.impl.ActionOnEventListener;
 import won.bot.framework.eventbot.listener.impl.ActionOnFirstEventListener;
 import won.bot.framework.extensions.matcher.MatcherBehaviour;
 import won.bot.framework.extensions.matcher.MatcherExtension;
-import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
-<<<<<<< HEAD:src/main/java/won/bot/skeleton/impl/SkeletonBot.java
-import won.bot.skeleton.action.MatcherExtensionAtomCreatedAction;
-import won.bot.skeleton.action.RespondToMessageAction;
-import won.bot.skeleton.context.SkeletonBotContextWrapper;
-=======
-import won.bot.meetingbot.action.MatcherExtensionAtomCreatedAction;
-import won.bot.meetingbot.context.SkeletonBotContextWrapper;
->>>>>>> 5daca0cc67d28abe2a444d75c6f24e97d7b44408:src/main/java/won/bot/meetingbot/impl/SkeletonBot.java
+import won.bot.meetingbot.context.MeetingBotContextWrapper;
+import won.bot.meetingbot.action.RespondToMessageAction;
 
-public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
+public class MeetingBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private int registrationMatcherRetryInterval;
     private MatcherBehaviour matcherBehaviour;
@@ -64,13 +57,13 @@ public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAt
     @Override
     protected void initializeEventListeners() {
         EventListenerContext ctx = getEventListenerContext();
-        if (!(getBotContextWrapper() instanceof SkeletonBotContextWrapper)) {
+        if (!(getBotContextWrapper() instanceof MeetingBotContextWrapper)) {
             logger.error(getBotContextWrapper().getBotName() + " does not work without a SkeletonBotContextWrapper");
             throw new IllegalStateException(
                             getBotContextWrapper().getBotName() + " does not work without a SkeletonBotContextWrapper");
         }
         EventBus bus = getEventBus();
-        SkeletonBotContextWrapper botContextWrapper = (SkeletonBotContextWrapper) getBotContextWrapper();
+        MeetingBotContextWrapper botContextWrapper = (MeetingBotContextWrapper) getBotContextWrapper();
         // register listeners for event.impl.command events used to tell the bot to send
         // messages
         ExecuteWonMessageCommandBehaviour wonMessageCommandBehaviour = new ExecuteWonMessageCommandBehaviour(ctx);
