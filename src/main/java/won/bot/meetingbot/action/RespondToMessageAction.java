@@ -19,7 +19,9 @@ import won.protocol.util.WonRdfUtils;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Listener that responds to open and message events with automatic messages.
@@ -28,15 +30,21 @@ import java.util.Date;
 public class RespondToMessageAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private long millisTimeoutBeforeReply = 0;
-
+    //maps categoryName to Id;
+    private HashMap<String, String> categoryMap;
     public RespondToMessageAction(EventListenerContext eventListenerContext) {
         super(eventListenerContext);
+        loadCategoryMap();
     }
 
     public RespondToMessageAction(final EventListenerContext eventListenerContext,
                                   final long millisTimeoutBeforeReply) {
         super(eventListenerContext);
         this.millisTimeoutBeforeReply = millisTimeoutBeforeReply;
+    }
+
+    private void loadCategoryMap() {
+        //TODO Alex json file / fetch whatever
     }
 
     @Override
@@ -82,6 +90,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
             }
         }, new Date(System.currentTimeMillis() + this.millisTimeoutBeforeReply));
     }
+
     //Given a Won Message returns the Text message from it
     private String extractTextMessageFromWonMessage(WonMessage wonMessage) {
         if (wonMessage == null)
@@ -97,6 +106,8 @@ public class RespondToMessageAction extends BaseEventBotAction {
         } else {
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
+            String[] categories = parts[1].split(";");
+            ArrayList<String> filteredCategories = filterCategories(categories);
             double[][] locations = new double[locationStrings.length][2];
             for (int i = 0; i < locationStrings.length; i++) {
                 locations[i] = parseLocationString(locationStrings[i]);
@@ -106,33 +117,44 @@ public class RespondToMessageAction extends BaseEventBotAction {
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
                 return coordinatesToHood(interpolLocation[0], interpolLocation[1]);
             } catch (Exception e) {
-                return e.getMessage()+" or equals null";
+                return e.getMessage() + " or equals null";
             }
         }
     }
 
-    private  String coordinatesToHood(double longitude, double latitude) throws Exception {
+    private ArrayList<String> filterCategories(String[] categories) {
+        ArrayList<String> filtered = new ArrayList<>();
+        for(String category : categories){
+            if(categoryMap.containsKey(category)){
+                filtered.add(categoryMap.get(category));
+            }
+        }
+        return filtered;
+    }
+
+    private String coordinatesToHood(double longitude, double latitude) throws Exception {
         int range = 50;
-        int i =1;
-        String coordinates = locationsToString(longitude,latitude);
+        int i = 1;
+        String coordinates = locationsToString(longitude, latitude);
         while (range <= 100000) {
             FSVenueResult request = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search")
                     .withParameter("ll", coordinates)
                     .withParameter("range", Integer.toString(range))
                     .executeForObject(FSVenueResult.class);
-            if (request != null){
-                if (request.getMeta() != null){
-                    if(request.getMeta().getCode() == 200){
-                       return  request.getResponse().getVenues().get(0).getName();
+            if (request != null) {
+                if (request.getMeta() != null) {
+                    if (request.getMeta().getCode() == 200) {
+                        return request.getResponse().getVenues().get(0).getName();
                     }
                 }
             }
-            range +=50*i++;
+            range += 50 * i++;
         }
         throw new Exception("could not find Venues");
     }
-    private String locationsToString(double longitude, double latitude){
-        return longitude+","+latitude;
+
+    private String locationsToString(double longitude, double latitude) {
+        return longitude + "," + latitude;
     }
     /*
     private String locationsToString(double[][] locations){
@@ -145,7 +167,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
 
     //first latitude then longitude
     //Returns an double[2] array containing latitude and longitude as doubles
-    private double[] parseLocationString(String locationString){
+    private double[] parseLocationString(String locationString) {
         String[] latlng = locationString.split(",");
         String lat = latlng[0];
         String lng = latlng[1];
@@ -154,17 +176,17 @@ public class RespondToMessageAction extends BaseEventBotAction {
 
     //Given an Array of Locations [latitude][longitude] returns the weighted center of those locations.
     private double[] interpolateLocations(double[][] locations) throws Exception {
-            double sumLat = 0;
-            double sumLong = 0;
-            int i;
-            for (i = 0; i < locations.length; i++) {
-                if (locations[i].length != 2) {
-                    throw new Exception("Input does not match Expectations (length of 2)");
-                }
-                sumLat += locations[i][0];
-                sumLong += locations[i][1];
+        double sumLat = 0;
+        double sumLong = 0;
+        int i;
+        for (i = 0; i < locations.length; i++) {
+            if (locations[i].length != 2) {
+                throw new Exception("Input does not match Expectations (length of 2)");
             }
-            return new double[]{sumLat / i, sumLong / i};
+            sumLat += locations[i][0];
+            sumLong += locations[i][1];
+        }
+        return new double[]{sumLat / i, sumLong / i};
     }
 
 }
