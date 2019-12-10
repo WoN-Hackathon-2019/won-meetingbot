@@ -9,7 +9,10 @@ import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.MessageEvent;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
-import won.bot.meetingbot.foursquare.*;
+import won.bot.meetingbot.foursquare.FSCategory;
+import won.bot.meetingbot.foursquare.FSCategoryResult;
+import won.bot.meetingbot.foursquare.FSRequestBuilder;
+import won.bot.meetingbot.foursquare.FSVenueResult;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
@@ -30,6 +33,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
     private long millisTimeoutBeforeReply = 0;
     //maps categoryName to Id;
     private HashMap<String, String> categoryMap;
+
     public RespondToMessageAction(EventListenerContext eventListenerContext) {
         super(eventListenerContext);
         categoryMap = loadCategoryMap();
@@ -39,74 +43,60 @@ public class RespondToMessageAction extends BaseEventBotAction {
                                   final long millisTimeoutBeforeReply) {
         super(eventListenerContext);
         this.millisTimeoutBeforeReply = millisTimeoutBeforeReply;
+        categoryMap = loadCategoryMap();
     }
 
-    private HashMap<String, String> loadCategoryMap() {
-        FSCategoryResult result =
-                new FSRequestBuilder("https://api.foursquare.com/v2/venues/categories").executeForObject(FSCategoryResult.class);
-
-        HashMap<String, String> map = new HashMap<>();
-        if (result == null || result.getMeta() == null || result.getMeta().getCode() != 200) {
-            logger.error("Could not load categories from foursquare!");
-            return map;
+    public void addCategoryToMap(HashMap<String, String> map, FSCategory category) {
+        if (category == null) {
+            return;
         }
-
-        for (FSCategory category : result.getResponse().getCategories()) {
-            map.put(category.getName(), category.getId());
+        map.put(category.getName(), category.getId());
+        if (category.getCategories() == null) {
+            return;
         }
-
-        return map;
-    }
-
-    @Override
-    protected void doRun(final Event event, EventListener executingListener) throws Exception {
-        if (event instanceof ConnectionSpecificEvent) {
-            handleMessageEvent((ConnectionSpecificEvent) event);
+        for (FSCategory subCategory : category.getCategories()) {
+            addCategoryToMap(map, subCategory);
         }
     }
 
-    private void handleMessageEvent(final ConnectionSpecificEvent messageEvent) {
-        getEventListenerContext().getTaskScheduler().schedule(() -> {
-            String message = null;
-            if (messageEvent instanceof MessageEvent) {
-                message = createMessage(
-                        extractTextMessageFromWonMessage(((MessageEvent) messageEvent).getWonMessage()));
-            } else {
-                message = createMessage(null);
+    private String coordinatesToHood(double longitude, double latitude, String filteredCategoriesString) throws Exception {
+        int range = 50;
+        int i = 1;
+        String coordinates = locationsToString(longitude, latitude);
+        while (range <= 100000) {
+            FSVenueResult request =
+                    new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
+                            coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
+                            filteredCategoriesString).executeForObject(FSVenueResult.class);
+
+            //TODO: check if this null check really catches no returned results
+            if (request != null) {
+                if (request.getMeta() != null) {
+                    if (request.getMeta().getCode() == 200) {
+                        if (request.getResponse().getVenues().size() > 0) {
+                            String name = request.getResponse().getVenues().get(0).getName() + "\n";
+                            String address =
+                                    request.getResponse().getVenues().get(0).getLocation().getFormattedAddress().toString();
+                            return "We suggest you meet here:\n" + name + "\n" + address;
+                        }
+
+                    }
+                }
             }
-            URI connectionUri = messageEvent.getConnectionURI();
-            logger.debug("sending message " + message);
-            URI senderSocket = messageEvent.getSocketURI();
-            URI targetSocket = messageEvent.getTargetSocketURI();
-            try {
-                EventListenerContext ctx = getEventListenerContext();
-
-                MeetingBotContextWrapper botContextWrapper = (MeetingBotContextWrapper) ctx.getBotContextWrapper();
-
-                WonMessage wonMessage = WonMessageBuilder
-                        .connectionMessage()
-                        .sockets()
-                        .sender(senderSocket)
-                        .recipient(targetSocket)
-                        .content()
-                        .text(message)
-                        .build();
-                ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
-
-                /*getEventListenerContext().getWonMessageSender()
-                        .prepareAndSendMessage(createWonMessage(connectionUri, message)); */
-
-            } catch (Exception e) {
-                logger.warn("could not send message via connection {}", connectionUri, e);
-            }
-        }, new Date(System.currentTimeMillis() + this.millisTimeoutBeforeReply));
+            range += 50 * i++;
+        }
+        return "Sorry! We could not find any venues near the given locations...";
     }
 
-    //Given a Won Message returns the Text message from it
-    private String extractTextMessageFromWonMessage(WonMessage wonMessage) {
-        if (wonMessage == null)
-            return null;
-        return WonRdfUtils.MessageUtils.getTextMessage(wonMessage);
+    private String createCategoriesString(ArrayList<String> filteredCategories) {
+        StringBuilder sb = new StringBuilder();
+        for (String category : filteredCategories) {
+            sb.append(category).append(',');
+        }
+        logger.info("XXX: {}, sb.length: {}, sb: '{}'", filteredCategories, sb.length(), sb.toString());
+
+        if (sb.length() > 0) return sb.toString().substring(0, sb.length() - 1);
+        return "";
     }
 
     //Given a message containing lat and longitude of locations split by "/" and ";" returns a Message containing
@@ -136,71 +126,58 @@ public class RespondToMessageAction extends BaseEventBotAction {
         }
     }
 
-    private String createCategoriesString(ArrayList<String> filteredCategories) {
-        StringBuilder sb = new StringBuilder();
-        for(String category : filteredCategories){
-            sb.append(category).append(',');
+    @Override
+    protected void doRun(final Event event, EventListener executingListener) throws Exception {
+        if (event instanceof ConnectionSpecificEvent) {
+            handleMessageEvent((ConnectionSpecificEvent) event);
         }
-        if(sb.length() > 0)
-            return sb.toString().substring(0, sb.length()-1);
-        return "";
+    }
+
+    //Given a Won Message returns the Text message from it
+    private String extractTextMessageFromWonMessage(WonMessage wonMessage) {
+        if (wonMessage == null) return null;
+        return WonRdfUtils.MessageUtils.getTextMessage(wonMessage);
     }
 
     private ArrayList<String> filterCategories(String[] categories) {
         ArrayList<String> filtered = new ArrayList<>();
-        for(String category : categories){
-            if(categoryMap.containsKey(category)){
+        for (String category : categories) {
+            if (categoryMap.containsKey(category)) {
                 filtered.add(categoryMap.get(category));
             }
         }
         return filtered;
     }
 
-    private String coordinatesToHood(double longitude, double latitude, String filteredCategoriesString) throws Exception {
-        int range = 50;
-        int i = 1;
-        String coordinates = locationsToString(longitude, latitude);
-        while (range <= 100000) {
-            FSVenueResult request = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search")
-                    .withParameter("ll", coordinates)
-                    .withParameter("range", Integer.toString(range))
-                    .withParameter("categoryId", filteredCategoriesString)
-                    .executeForObject(FSVenueResult.class);
-
-            //TODO: check if this null check really catches no returned results
-            if (request != null){
-                if (request.getMeta() != null){
-                    if(request.getMeta().getCode() == 200){
-                       String name = request.getResponse().getVenues().get(0).getName()+"\n";
-                       String address = request.getResponse().getVenues().get(0).getLocation().getFormattedAddress().toString();
-                       return "We suggest you meet here:\n"+name+"\n"+address;
-                    }
-                }
+    private void handleMessageEvent(final ConnectionSpecificEvent messageEvent) {
+        getEventListenerContext().getTaskScheduler().schedule(() -> {
+            String message = null;
+            if (messageEvent instanceof MessageEvent) {
+                message =
+                        createMessage(extractTextMessageFromWonMessage(((MessageEvent) messageEvent).getWonMessage()));
+            } else {
+                message = createMessage(null);
             }
-            range += 50 * i++;
-        }
-        throw new Exception("could not find any Venues");
-    }
+            URI connectionUri = messageEvent.getConnectionURI();
+            logger.debug("sending message " + message);
+            URI senderSocket = messageEvent.getSocketURI();
+            URI targetSocket = messageEvent.getTargetSocketURI();
+            try {
+                EventListenerContext ctx = getEventListenerContext();
 
-    private String locationsToString(double longitude, double latitude) {
-        return longitude + "," + latitude;
-    }
-    /*
-    private String locationsToString(double[][] locations){
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < locations.length; i++) {
-            sb.append("Location ").append(i).append(": ").append(locations[i][0]).append(",").append(locations[i][1]).append("\n");
-        }
-        return sb.toString();
-    }*/
+                MeetingBotContextWrapper botContextWrapper = (MeetingBotContextWrapper) ctx.getBotContextWrapper();
 
-    //first latitude then longitude
-    //Returns an double[2] array containing latitude and longitude as doubles
-    private double[] parseLocationString(String locationString) {
-        String[] latlng = locationString.split(",");
-        String lat = latlng[0];
-        String lng = latlng[1];
-        return new double[]{Double.parseDouble(lat), Double.parseDouble(lng)};
+                WonMessage wonMessage =
+                        WonMessageBuilder.connectionMessage().sockets().sender(senderSocket).recipient(targetSocket).content().text(message).build();
+                ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
+
+                /*getEventListenerContext().getWonMessageSender()
+                        .prepareAndSendMessage(createWonMessage(connectionUri, message)); */
+
+            } catch (Exception e) {
+                logger.warn("could not send message via connection {}", connectionUri, e);
+            }
+        }, new Date(System.currentTimeMillis() + this.millisTimeoutBeforeReply));
     }
 
     //Given an Array of Locations [latitude][longitude] returns the weighted center of those locations.
@@ -216,6 +193,46 @@ public class RespondToMessageAction extends BaseEventBotAction {
             sumLong += locations[i][1];
         }
         return new double[]{sumLat / i, sumLong / i};
+    }
+
+    private HashMap<String, String> loadCategoryMap() {
+        FSCategoryResult result =
+                new FSRequestBuilder("https://api.foursquare.com/v2/venues/categories").executeForObject(FSCategoryResult.class);
+
+        HashMap<String, String> map = new HashMap<>();
+        if (result == null || result.getMeta() == null || result.getMeta().getCode() != 200) {
+            logger.error("Could not load categories from foursquare!");
+            return map;
+        }
+
+        for (FSCategory category : result.getResponse().getCategories()) {
+            addCategoryToMap(map, category);
+        }
+
+        logger.info("We have {} categories", map.size());
+        return map;
+    }
+    /*
+    private String locationsToString(double[][] locations){
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < locations.length; i++) {
+            sb.append("Location ").append(i).append(": ").append(locations[i][0]).append(",").append(locations[i][1])
+            .append("\n");
+        }
+        return sb.toString();
+    }*/
+
+    private String locationsToString(double longitude, double latitude) {
+        return longitude + "," + latitude;
+    }
+
+    //first latitude then longitude
+    //Returns an double[2] array containing latitude and longitude as doubles
+    private double[] parseLocationString(String locationString) {
+        String[] latlng = locationString.split(",");
+        String lat = latlng[0];
+        String lng = latlng[1];
+        return new double[]{Double.parseDouble(lat), Double.parseDouble(lng)};
     }
 
 }
