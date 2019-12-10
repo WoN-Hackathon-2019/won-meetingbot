@@ -5,6 +5,6 @@ Possible Extensions:
 * More than 2 locations
 
 ## Members
-* [Alexander Melem] (https://github.com/melemalex)
-* [Fabian Windbacher] (https://github.com/fabianwindbacher)
-* [Max Podpera] (https://github.com/MaxPodpera)
+* [Alexander Melem](https://github.com/melemalex)
+* [Fabian Windbacher](https://github.com/fabianwindbacher)
+* [Max Podpera](https://github.com/MaxPodpera)

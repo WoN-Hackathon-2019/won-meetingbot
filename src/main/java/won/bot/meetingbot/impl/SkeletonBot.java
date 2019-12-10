@@ -1,4 +1,4 @@
-package won.bot.skeleton.impl;
+package won.bot.meetingbot.impl;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
@@ -27,8 +27,8 @@ import won.bot.framework.extensions.matcher.MatcherExtension;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
-import won.bot.skeleton.action.MatcherExtensionAtomCreatedAction;
-import won.bot.skeleton.context.SkeletonBotContextWrapper;
+import won.bot.meetingbot.action.MatcherExtensionAtomCreatedAction;
+import won.bot.meetingbot.context.SkeletonBotContextWrapper;
 
 public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
