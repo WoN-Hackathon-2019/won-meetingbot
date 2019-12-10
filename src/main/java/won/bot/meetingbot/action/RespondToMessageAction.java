@@ -123,7 +123,9 @@ public class RespondToMessageAction extends BaseEventBotAction {
             if (request != null){
                 if (request.getMeta() != null){
                     if(request.getMeta().getCode() == 200){
-                       return  request.getResponse().getVenues().get(0).getName();
+                       String name = request.getResponse().getVenues().get(0).getName()+"\n";
+                       String address = request.getResponse().getVenues().get(0).getLocation().getFormattedAddress().toString();
+                       return name+"\n"+address;
                     }
                 }
             }
