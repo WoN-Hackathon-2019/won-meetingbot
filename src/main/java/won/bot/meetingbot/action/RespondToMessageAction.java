@@ -141,10 +141,19 @@ public class RespondToMessageAction extends BaseEventBotAction {
                     .withParameter("ll", coordinates)
                     .withParameter("range", Integer.toString(range))
                     .executeForObject(FSVenueResult.class);
+<<<<<<< HEAD
             if (request != null) {
                 if (request.getMeta() != null) {
                     if (request.getMeta().getCode() == 200) {
                         return request.getResponse().getVenues().get(0).getName();
+=======
+            if (request != null){
+                if (request.getMeta() != null){
+                    if(request.getMeta().getCode() == 200){
+                       String name = request.getResponse().getVenues().get(0).getName()+"\n";
+                       String address = request.getResponse().getVenues().get(0).getLocation().getFormattedAddress().toString();
+                       return name+"\n"+address;
+>>>>>>> ded826bae57722027c440e086661b91010b14a44
                     }
                 }
             }
