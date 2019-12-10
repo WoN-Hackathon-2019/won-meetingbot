@@ -78,13 +78,15 @@ public class RespondToMessageAction extends BaseEventBotAction {
             }
         }, new Date(System.currentTimeMillis() + this.millisTimeoutBeforeReply));
     }
-
+    //Given a Won Message returns the Text message from it
     private String extractTextMessageFromWonMessage(WonMessage wonMessage) {
         if (wonMessage == null)
             return null;
         return WonRdfUtils.MessageUtils.getTextMessage(wonMessage);
     }
 
+    //Given a message containing lat and longitude of locations split by "/" and ";" returns a Message containing
+    //informations regarding the best matching venue, else an error message
     private String createMessage(String inMessage) {
         if (inMessage == null) {
             return "no message found";
@@ -96,32 +98,39 @@ public class RespondToMessageAction extends BaseEventBotAction {
                 locations[i] = parseLocationString(locationStrings[i]);
             }
             try {
-                double[] interpolatedLocation = interpolateLocations(locations);
+                double[] interpolLocation = interpolateLocations(locations);
+                return locationsToString(interpolLocation[0],interpolLocation[1]);
             } catch (Exception e) {
                 return e.getMessage()+" or equals null";
             }
-            return locationsToString(locations);
         }
     }
+
+    private  String coordinatesToHood(double longitude, double latitude){
+        return "";
+    }
+    private String locationsToString(double longitude, double latitude){
+        return "Location: "+longitude+","+latitude;
+    }
+    /*
     private String locationsToString(double[][] locations){
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < locations.length; i++) {
             sb.append("Location ").append(i).append(": ").append(locations[i][0]).append(",").append(locations[i][1]).append("\n");
         }
         return sb.toString();
-    }
+    }*/
 
     //first latitude then longitude
+    //Returns an double[2] array containing latitude and longitude as doubles
     private double[] parseLocationString(String locationString){
         String[] latlng = locationString.split(",");
         String lat = latlng[0];
         String lng = latlng[1];
         return new double[]{Double.parseDouble(lat), Double.parseDouble(lng)};
-        //return null;
     }
 
     //Given an Array of Locations [latitude][longitude] returns the weighted center of those locations.
-
     private double[] interpolateLocations(double[][] locations) throws Exception {
             double sumLat = 0;
             double sumLong = 0;
