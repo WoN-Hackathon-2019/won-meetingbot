@@ -17,6 +17,7 @@ import won.protocol.util.WonRdfUtils;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -117,6 +118,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
             String[] categories = parts[1].split(";");
+            logger.info("Searching for '{}'", Arrays.toString(categories));
             ArrayList<String> filteredCategories = filterCategories(categories);
             String filteredCategoriesString = createCategoriesString(filteredCategories);
             double[][] locations = new double[locationStrings.length][2];
@@ -128,6 +130,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
                 return coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString);
             } catch (Exception e) {
+                logger.error("Message could not be created! " + e.getMessage());
                 return e.getMessage() + " or equals null";
             }
         }

@@ -1,11 +1,14 @@
 package won.bot.meetingbot.foursquare;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 public class FSRequestBuilder {
 
+    private static final Logger logger = LoggerFactory.getLogger(FSRequestBuilder.class);
     private String url;
     private String parameters = "?";
 
@@ -25,6 +28,7 @@ public class FSRequestBuilder {
     }
 
     public <T> T executeForObject(Class<T> responseType, Object... uriVariables) throws RestClientException {
+        logger.info("Requesting '{}'", this.url + this.parameters);
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForObject(this.url + this.parameters, responseType, uriVariables);
     }
