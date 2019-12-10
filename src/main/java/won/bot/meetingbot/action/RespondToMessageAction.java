@@ -109,6 +109,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
             String[] locationStrings = parts[0].split(";");
             String[] categories = parts[1].split(";");
             ArrayList<String> filteredCategories = filterCategories(categories);
+            String filteredCategoriesString = createCategoriesString(filteredCategories);
             double[][] locations = new double[locationStrings.length][2];
             for (int i = 0; i < locationStrings.length; i++) {
                 locations[i] = parseLocationString(locationStrings[i]);
@@ -116,11 +117,21 @@ public class RespondToMessageAction extends BaseEventBotAction {
             try {
                 double[] interpolLocation = interpolateLocations(locations);
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
-                return coordinatesToHood(interpolLocation[0], interpolLocation[1]);
+                return coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString);
             } catch (Exception e) {
                 return e.getMessage() + " or equals null";
             }
         }
+    }
+
+    private String createCategoriesString(ArrayList<String> filteredCategories) {
+        StringBuilder sb = new StringBuilder();
+        for(String category : filteredCategories){
+            sb.append(category).append(',');
+        }
+        if(sb.length() > 0)
+            return sb.toString().substring(0, sb.length()-1);
+        return "";
     }
 
     private ArrayList<String> filterCategories(String[] categories) {
@@ -133,7 +144,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
         return filtered;
     }
 
-    private String coordinatesToHood(double longitude, double latitude) throws Exception {
+    private String coordinatesToHood(double longitude, double latitude, String filteredCategoriesString) throws Exception {
         int range = 50;
         int i = 1;
         String coordinates = locationsToString(longitude, latitude);
@@ -141,8 +152,10 @@ public class RespondToMessageAction extends BaseEventBotAction {
             FSVenueResult request = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search")
                     .withParameter("ll", coordinates)
                     .withParameter("range", Integer.toString(range))
+                    .withParameter("categoryId", filteredCategoriesString)
                     .executeForObject(FSVenueResult.class);
 
+            //TODO: check if this null check really catches no returned results
             if (request != null){
                 if (request.getMeta() != null){
                     if(request.getMeta().getCode() == 200){
