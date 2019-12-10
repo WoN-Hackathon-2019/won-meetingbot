@@ -85,12 +85,37 @@ public class RespondToMessageAction extends BaseEventBotAction {
         return WonRdfUtils.MessageUtils.getTextMessage(wonMessage);
     }
 
-    private String createMessage(String toEcho) {
-        if (toEcho == null) {
-            return "auto reply (delay: " + millisTimeoutBeforeReply + " millis)";
+    private String createMessage(String inMessage) {
+        if (inMessage == null) {
+            return "no message found";
         } else {
-            return "You said: '" + toEcho + "' (delay: " + millisTimeoutBeforeReply + " millis)";
+            String[] parts = inMessage.split("/");
+            String[] locationStrings = parts[0].split(";");
+            double[][] locations = new double[locationStrings.length][2];
+            for (int i = 0; i < locationStrings.length; i++) {
+                locations[i] = parseLocationString(locationStrings[i]);
+            }
+            double[] interpolatedLocation = interpolateLocations(locations);
+
+            return locationsToString(locations);
         }
     }
-
+    private String locationsToString(double[][] locations){
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < locations.length; i++) {
+            sb.append("Location ").append(i).append(": ").append(locations[i][0]).append(",").append(locations[i][1]).append("\n");
+        }
+        return sb.toString();
+    }
+    //first latitude then longitude
+    private double[] parseLocationString(String locationString){
+        String[] latlng = locationString.split(",");
+        String lat = latlng[0];
+        String lng = latlng[1];
+        return new double[]{Double.parseDouble(lat), Double.parseDouble(lng)};
+        //return null;
+    }
+    private double[] interpolateLocations(double[][] locations){
+        return null;
+    }
 }
