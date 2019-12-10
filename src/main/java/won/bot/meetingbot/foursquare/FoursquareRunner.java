@@ -1,0 +1,33 @@
+package won.bot.meetingbot.foursquare;
+
+
+import org.springframework.web.client.RestTemplate;
+
+import java.io.*;
+import java.net.*;
+import java.util.HashMap;
+import java.util.Map;
+
+public class FoursquareRunner {
+
+    public static void main(String[] args) throws IOException {
+
+        FSCategoryResult result =
+                new FSRequestBuilder("https://api.foursquare.com/v2/venues/categories").executeForObject(FSCategoryResult.class);
+
+        System.out.println(result.getResponse().getCategories());
+
+        String xxx = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter(
+                "ll", "40.74224,-73.99386").executeForObject(String.class);
+        System.out.println(xxx);
+
+        FSVenueResult venues = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter(
+                "ll", "48.194530,16.369823").executeForObject(FSVenueResult.class);
+        System.out.println(venues.getMeta().getCode());
+        System.out.println(venues.getResponse());
+        System.out.println(venues.getResponse().getVenues());
+        System.out.println(venues.getResponse().getVenues().get(0));
+
+    }
+
+}
