@@ -9,10 +9,7 @@ import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.MessageEvent;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
-import won.bot.meetingbot.foursquare.FSRequestBuilder;
-import won.bot.meetingbot.foursquare.FSVenue;
-import won.bot.meetingbot.foursquare.FSVenueResult;
-import won.bot.meetingbot.foursquare.FoursquareRunner;
+import won.bot.meetingbot.foursquare.*;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
@@ -44,8 +41,20 @@ public class RespondToMessageAction extends BaseEventBotAction {
     }
 
     private HashMap<String, String> loadCategoryMap() {
-        //TODO Alex json file / fetch whatever
-        return null;
+        FSCategoryResult result =
+                new FSRequestBuilder("https://api.foursquare.com/v2/venues/categories").executeForObject(FSCategoryResult.class);
+
+        HashMap<String, String> map = new HashMap<>();
+        if (result == null || result.getMeta() == null || result.getMeta().getCode() != 200) {
+            logger.error("Could not load categories from foursquare!");
+            return map;
+        }
+
+        for (FSCategory category : result.getResponse().getCategories()) {
+            map.put(category.getName(), category.getId());
+        }
+
+        return map;
     }
 
     @Override
@@ -142,6 +151,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
                     .withParameter("ll", coordinates)
                     .withParameter("range", Integer.toString(range))
                     .executeForObject(FSVenueResult.class);
+
 
             if (request != null){
                 if (request.getMeta() != null){
