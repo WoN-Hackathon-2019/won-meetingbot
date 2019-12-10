@@ -103,7 +103,8 @@ public class RespondToMessageAction extends BaseEventBotAction {
             }
             try {
                 double[] interpolLocation = interpolateLocations(locations);
-                return locationsToString(interpolLocation[0],interpolLocation[1]);
+                //return locationsToString(interpolLocation[0],interpolLocation[1]);
+                return coordinatesToHood(interpolLocation[0], interpolLocation[1]);
             } catch (Exception e) {
                 return e.getMessage()+" or equals null";
             }
