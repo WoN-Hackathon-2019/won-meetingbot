@@ -95,8 +95,11 @@ public class RespondToMessageAction extends BaseEventBotAction {
             for (int i = 0; i < locationStrings.length; i++) {
                 locations[i] = parseLocationString(locationStrings[i]);
             }
-            double[] interpolatedLocation = interpolateLocations(locations);
-
+            try {
+                double[] interpolatedLocation = interpolateLocations(locations);
+            } catch (Exception e) {
+                return e.getMessage()+" or equals null";
+            }
             return locationsToString(locations);
         }
     }
@@ -107,6 +110,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
         }
         return sb.toString();
     }
+
     //first latitude then longitude
     private double[] parseLocationString(String locationString){
         String[] latlng = locationString.split(",");
@@ -115,7 +119,21 @@ public class RespondToMessageAction extends BaseEventBotAction {
         return new double[]{Double.parseDouble(lat), Double.parseDouble(lng)};
         //return null;
     }
-    private double[] interpolateLocations(double[][] locations){
-        return null;
+
+    //Given an Array of Locations [latitude][longitude] returns the weighted center of those locations.
+
+    private double[] interpolateLocations(double[][] locations) throws Exception {
+            double sumLat = 0;
+            double sumLong = 0;
+            int i;
+            for (i = 0; i < locations.length; i++) {
+                if (locations[i].length != 2) {
+                    throw new Exception("Input does not match Expectations (length of 2)");
+                }
+                sumLat += locations[i][0];
+                sumLong += locations[i][1];
+            }
+            return new double[]{sumLat / i, sumLong / i};
     }
+
 }
