@@ -9,6 +9,10 @@ import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.MessageEvent;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
+import won.bot.meetingbot.foursquare.FSRequestBuilder;
+import won.bot.meetingbot.foursquare.FSVenue;
+import won.bot.meetingbot.foursquare.FSVenueResult;
+import won.bot.meetingbot.foursquare.FoursquareRunner;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
@@ -106,11 +110,28 @@ public class RespondToMessageAction extends BaseEventBotAction {
         }
     }
 
-    private  String coordinatesToHood(double longitude, double latitude){
-        return "";
+    private  String coordinatesToHood(double longitude, double latitude) throws Exception {
+        int range = 50;
+        int i =1;
+        String coordinates = locationsToString(longitude,latitude);
+        while (range <= 100000) {
+            FSVenueResult request = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search")
+                    .withParameter("ll", coordinates)
+                    .withParameter("range", Integer.toString(range))
+                    .executeForObject(FSVenueResult.class);
+            if (request != null){
+                if (request.getMeta() != null){
+                    if(request.getMeta().getCode() == 200){
+                       return  request.getResponse().getVenues().get(0).getName();
+                    }
+                }
+            }
+            range +=50*i++;
+        }
+        throw new Exception("could not find Venues");
     }
     private String locationsToString(double longitude, double latitude){
-        return "Location: "+longitude+","+latitude;
+        return longitude+","+latitude;
     }
     /*
     private String locationsToString(double[][] locations){
