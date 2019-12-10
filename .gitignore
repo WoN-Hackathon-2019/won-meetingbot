@@ -20,3 +20,5 @@ settings.json
 !/.mvn/wrapper/maven-wrapper.jar
 
 skeleton.iml
+stale_outputs_checked
+echobot-test.iml
