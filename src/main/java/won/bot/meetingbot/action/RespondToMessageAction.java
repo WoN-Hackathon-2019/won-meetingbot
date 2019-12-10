@@ -173,13 +173,13 @@ public class RespondToMessageAction extends BaseEventBotAction {
                     if(request.getMeta().getCode() == 200){
                        String name = request.getResponse().getVenues().get(0).getName()+"\n";
                        String address = request.getResponse().getVenues().get(0).getLocation().getFormattedAddress().toString();
-                       return name+"\n"+address;
+                       return "We suggest you meet here:\n"+name+"\n"+address;
                     }
                 }
             }
             range += 50 * i++;
         }
-        throw new Exception("could not find Venues");
+        throw new Exception("could not find any Venues");
     }
 
     private String locationsToString(double longitude, double latitude) {
