@@ -78,6 +78,7 @@ public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAt
         NotFilter noOwnAtoms = new NotFilter(
                         new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
         // filter to prevent reacting to serviceAtom<->ownedAtom events;
+
         NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
         bus.subscribe(ConnectFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new BaseEventBotAction(ctx) {
             @Override
@@ -85,7 +86,8 @@ public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAt
                 EventListenerContext ctx = getEventListenerContext();
                 ConnectFromOtherAtomEvent connectFromOtherAtomEvent = (ConnectFromOtherAtomEvent) event;
                 try {
-                    String message = "Hello i am the BotSkeletor i will send you a message everytime an atom is created...";
+                    String message = "Hello i am the MeetingBot... Given two locations i will provide you with the perfect" +
+                            " location to meet up";
                     final ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
                                     connectFromOtherAtomEvent.getRecipientSocket(),
                                     connectFromOtherAtomEvent.getSenderSocket(), message);
