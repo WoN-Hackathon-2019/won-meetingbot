@@ -94,7 +94,7 @@ public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAt
                 EventListenerContext ctx = getEventListenerContext();
                 ConnectFromOtherAtomEvent connectFromOtherAtomEvent = (ConnectFromOtherAtomEvent) event;
                 try {
-                    String message = "Hello i am the BotSkeletor i will send you a message everytime an atom is created...";
+                    String message = "Hello i am the MeetingBot! Please tell me two locations and I'll tell you a venue.";
                     final ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
                                     connectFromOtherAtomEvent.getRecipientSocket(),
                                     connectFromOtherAtomEvent.getSenderSocket(), message);
