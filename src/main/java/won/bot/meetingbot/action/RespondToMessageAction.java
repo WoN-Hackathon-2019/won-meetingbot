@@ -9,10 +9,7 @@ import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.MessageEvent;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
-import won.bot.meetingbot.foursquare.FSCategory;
-import won.bot.meetingbot.foursquare.FSCategoryResult;
-import won.bot.meetingbot.foursquare.FSRequestBuilder;
-import won.bot.meetingbot.foursquare.FSVenueResult;
+import won.bot.meetingbot.foursquare.*;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
@@ -75,9 +72,12 @@ public class RespondToMessageAction extends BaseEventBotAction {
                     if (request.getMeta().getCode() == 200) {
                         if (request.getResponse().getVenues().size() > 0) {
                             String name = request.getResponse().getVenues().get(0).getName() + "\n";
+                            FSLocation location = request.getResponse().getVenues().get(0).getLocation();
                             String address =
-                                    request.getResponse().getVenues().get(0).getLocation().getFormattedAddress().toString();
-                            return "We suggest you meet here:\n" + name + "\n" + address;
+                                    location.getFormattedAddress().toString();
+                            String link =
+                                    "(http://maps.google.com/maps?q=" + location.getLat() + "," + location.getLng() + ")";
+                            return "We suggest you meet here:\n" + name + "\n" + address + link ;
                         }
 
                     }
@@ -118,7 +118,9 @@ public class RespondToMessageAction extends BaseEventBotAction {
             try {
                 double[] interpolLocation = interpolateLocations(locations);
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
-                return coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString);
+                String message = coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString);
+                logger.info("Sending message: \"{}\"", message);
+                return message;
             } catch (Exception e) {
                 logger.error("Message could not be created! " + e.getMessage());
                 return e.getMessage() + " or equals null";
