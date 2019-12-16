@@ -78,7 +78,7 @@ public class OSMLocation {
     public static OSMLocation getLocationForAddress(String address) {
         OSMLocation[] result =
                 new OSMRequestBuilder("https://nominatim.openstreetmap.org/search?format=json" +
-                        "&addressdetails=0&q=Stelzhamerstraße 4, 4701 Bad Schallerbach").executeForObject(OSMLocation[].class);
+                        "&addressdetails=0&q=" + address).executeForObject(OSMLocation[].class);
         if (result.length == 0) {
             logger.error("Could not find location for address: '{}'", address);
             return null;
