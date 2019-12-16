@@ -16,6 +16,7 @@ import won.bot.meetingbot.Venue;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
 import won.bot.meetingbot.foursquare.*;
 import won.bot.meetingbot.impl.RequestMessage;
+import won.bot.meetingbot.openstreetmap.OSMLocation;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
@@ -148,8 +149,19 @@ public class RespondToMessageAction extends BaseEventBotAction {
                     e.printStackTrace();
                 }
             }
+
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
+            for (int i = 0; i < locationStrings.length ; i++) {
+                if ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".contains(locationStrings[i].substring(0, 1))) {
+                    OSMLocation locationOfAddress = OSMLocation.getLocationForAddress(locationStrings[i]);
+                    try {
+                        locationStrings[i] = locationOfAddress.getLat() + "," + locationOfAddress.getLon();
+                    }catch (NullPointerException e){
+                        return "OOPSIE Something went wrong" + e.getMessage();
+                    }
+                }
+            }
             String filteredCategoriesString= "";
             if (parts.length > 2 ) {
                 return "Message could not be parsed. \nUse ',' to Split longitude and latitude Coordinates\n" +
