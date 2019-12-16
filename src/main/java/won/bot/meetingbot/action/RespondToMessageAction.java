@@ -207,6 +207,9 @@ public class RespondToMessageAction extends BaseEventBotAction {
     private ArrayList<String> filterCategories(String[] categories) {
         ArrayList<String> filtered = new ArrayList<>();
         for (String category : categories) {
+            if (category.charAt(0) == ' '){
+                category = category.substring(1);
+            }
             if (categoryMap.containsKey(category)) {
                 filtered.add(categoryMap.get(category));
             }
