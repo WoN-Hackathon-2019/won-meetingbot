@@ -10,12 +10,16 @@ import won.bot.framework.bot.base.EventBot;
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.action.impl.LogAction;
+import won.bot.framework.eventbot.action.impl.wonmessage.OpenConnectionAction;
 import won.bot.framework.eventbot.behaviour.ExecuteWonMessageCommandBehaviour;
 import won.bot.framework.eventbot.bus.EventBus;
 import won.bot.framework.eventbot.event.Event;
+import won.bot.framework.eventbot.event.impl.atomlifecycle.AtomCreatedEvent;
+import won.bot.framework.eventbot.event.impl.command.close.CloseCommandEvent;
 import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandEvent;
 import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandResultEvent;
 import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandSuccessEvent;
+import won.bot.framework.eventbot.event.impl.lifecycle.ShutdownEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.CloseFromOtherAtomEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.ConnectFromOtherAtomEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.MessageFromOtherAtomEvent;
@@ -32,6 +36,7 @@ import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
 import won.bot.meetingbot.action.RespondToMessageAction;
+import won.protocol.model.ConnectionState;
 
 public class MeetingBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -56,6 +61,7 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
 
     @Override
     protected void initializeEventListeners() {
+        logger.debug("initializeEventListeners");
         EventListenerContext ctx = getEventListenerContext();
         if (!(getBotContextWrapper() instanceof MeetingBotContextWrapper)) {
             logger.error(getBotContextWrapper().getBotName() + " does not work without a SkeletonBotContextWrapper");
@@ -71,6 +77,11 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
         // activate ServiceAtomBehaviour
         serviceAtomBehaviour = new ServiceAtomBehaviour(ctx);
         serviceAtomBehaviour.activate();
+
+        bus.subscribe(AtomCreatedEvent.class, event -> {
+            AtomCreatedEvent ev = (AtomCreatedEvent)event;
+            logger.info("Our atom is @ https://hackathon.matchat.org/owner/#!/post/?postUri={}", ev.getAtomURI());
+        });
         // set up matching extension
         // as this is an extension, it can be activated and deactivated as needed
         // if activated, a MatcherExtensionAtomCreatedEvent is sent every time a new
@@ -82,13 +93,40 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                         new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
         // filter to prevent reacting to serviceAtom<->ownedAtom events;
         NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
+        NotFilter x = new NotFilter(event -> true);
         BaseEventListener autoResponder = new ActionOnEventListener(ctx, new RespondToMessageAction(ctx));
         bus.subscribe(MessageFromOtherAtomEvent.class, autoResponder);
         bus.subscribe(CloseFromOtherAtomEvent.class,
                 new ActionOnEventListener(ctx, new LogAction(ctx, "received close message from remote atom.")));
-        bus.subscribe(ConnectFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new BaseEventBotAction(ctx) {
+
+        bus.subscribe(ConnectFromOtherAtomEvent.class, new BaseEventBotAction(ctx) {
+            @Override
+            protected void doRun(Event event, EventListener eventListener) throws Exception {
+                EventListenerContext ctx = getEventListenerContext();
+                logger.info("EVENT: {}", event);
+                ConnectFromOtherAtomEvent con = (ConnectFromOtherAtomEvent) event;
+                ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(con.getRecipientSocket(),
+                        con.getSenderSocket(), "TEST");
+                ctx.getEventBus().publish(connectCommandEvent);
+
+/*
+                CloseCommandEvent close = new CloseCommandEvent(con.getCon(), "Bye!");
+                ctx.getEventBus().publish(close);
+
+*/
+
+            }
+
+        });
+
+        bus.subscribe(ShutdownEvent.class, event -> {
+            ShutdownEvent shutdownEvent = (ShutdownEvent)event;
+            printAtoms(botContextWrapper);
+        })
+/*        bus.subscribe(ConnectFromOtherAtomEvent.class, x, new BaseEventBotAction(ctx) {
             @Override
             protected void doRun(Event event, EventListener executingListener) {
+                logger.debug("ConnectFromOtherAtomEvent");
                 EventListenerContext ctx = getEventListenerContext();
                 ConnectFromOtherAtomEvent connectFromOtherAtomEvent = (ConnectFromOtherAtomEvent) event;
                 try {
@@ -123,7 +161,7 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                     logger.error(te.getMessage(), te);
                 }
             }
-        });
+        })*/;
         // listen for the MatcherExtensionAtomCreatedEvent
         //bus.subscribe(MatcherExtensionAtomCreatedEvent.class, new MatcherExtensionAtomCreatedAction(ctx));
         bus.subscribe(CloseFromOtherAtomEvent.class, new BaseEventBotAction(ctx) {
@@ -137,6 +175,13 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                                 + " from the botcontext ");
                 botContextWrapper.removeConnectedSocket(senderSocketUri, targetSocketUri);
             }
+        });
+    }
+
+
+    private void printAtoms(MeetingBotContextWrapper botContextWrapper) {
+        botContextWrapper.getConnectedSockets().forEach((uri, uris) -> {
+            logger.debug("URI in connected sockets: {}", uri);
         });
     }
 }
