@@ -8,6 +8,7 @@ import won.bot.framework.eventbot.event.ConnectionSpecificEvent;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.MessageEvent;
 import won.bot.framework.eventbot.listener.EventListener;
+import won.bot.meetingbot.Venue;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
 import won.bot.meetingbot.foursquare.*;
 import won.protocol.message.WonMessage;
@@ -77,6 +78,9 @@ public class RespondToMessageAction extends BaseEventBotAction {
                                     location.getFormattedAddress().toString();
                             String link =
                                     "(http://maps.google.com/maps?q=" + location.getLat() + "," + location.getLng() + ")";
+                            Venue venue = new Venue(location, name);
+                            System.out.println("TEST");
+                            System.out.println(venue.toJSON());
                             return "We suggest you meet here:\n" + name + "\n" + address + link ;
                         }
 
