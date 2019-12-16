@@ -3,6 +3,7 @@ package won.bot.meetingbot.action;
 import at.apf.easycli.CliEngine;
 import at.apf.easycli.annotation.Command;
 import at.apf.easycli.impl.EasyEngine;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.eventbot.EventListenerContext;
@@ -14,10 +15,12 @@ import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.meetingbot.Venue;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
 import won.bot.meetingbot.foursquare.*;
+import won.bot.meetingbot.impl.RequestMessage;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
@@ -65,11 +68,17 @@ public class RespondToMessageAction extends BaseEventBotAction {
         int i = 1;
         String coordinates = locationsToString(longitude, latitude);
         while (range <= 100000) {
-            FSVenueResult request =
-                    new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
-                            coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
-                            filteredCategoriesString).executeForObject(FSVenueResult.class);
-
+            FSVenueResult request;
+            if (filteredCategoriesString == null){
+                request =
+                        new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
+                                coordinates).withParameter("range", Integer.toString(range)).executeForObject(FSVenueResult.class);
+            }else {
+                request =
+                        new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
+                                coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
+                                filteredCategoriesString).executeForObject(FSVenueResult.class);
+            }
             //TODO: check if this null check really catches no returned results
             if (request != null) {
                 if (request.getMeta() != null) {
@@ -116,8 +125,17 @@ public class RespondToMessageAction extends BaseEventBotAction {
         engine.register(new Object() {
             @Command("/json")
             String json(String message) {
-                logger.info("in /json engine");
-                return message;
+                RequestMessage m  = RequestMessage.parseJSON(message);
+                String outMessage;
+                try {
+                    double[] interpolLoc = interpolateLocations(m.getLocations());
+                    String filteredCategoriesString = createCategoriesString(filterCategories(m.getCategories()));
+                    outMessage = coordinatesToHood(interpolLoc[0], interpolLoc[1], filteredCategoriesString, true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    outMessage = "error in /json handling";
+                }
+                return outMessage;
             }
         });
         if (inMessage == null) {
@@ -125,22 +143,28 @@ public class RespondToMessageAction extends BaseEventBotAction {
         } else {
             if(inMessage.charAt(0) == '/'){
                 try {
-                    inMessage = (String) engine.parse(inMessage);
-                    jsonFlag = true;
+                    return (String) engine.parse(inMessage);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
-            String[] categories = parts[1].split(";");
-            logger.info("Searching for '{}'", Arrays.toString(categories));
-            ArrayList<String> filteredCategories = filterCategories(categories);
-            String filteredCategoriesString = createCategoriesString(filteredCategories);
+            String filteredCategoriesString= "";
+            if (parts.length > 2 ) {
+                return "Message could not be parsed. \nUse ',' to Split longitude and latitude Coordinates\n" +
+                        "';' to Split different coordinates and '/' to split between coordinates and category";
+            }else if (parts.length ==2) {
+                String[] categories = parts[1].split(";");
+                logger.info("Searching for '{}'", Arrays.toString(categories));
+                ArrayList<String> filteredCategories = filterCategories(categories);
+                filteredCategoriesString = createCategoriesString(filteredCategories);
+            }
             double[][] locations = new double[locationStrings.length][2];
             for (int i = 0; i < locationStrings.length; i++) {
                 locations[i] = parseLocationString(locationStrings[i]);
             }
+
             try {
                 double[] interpolLocation = interpolateLocations(locations);
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
@@ -170,6 +194,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
     private ArrayList<String> filterCategories(String[] categories) {
         ArrayList<String> filtered = new ArrayList<>();
         for (String category : categories) {
+            category = category.replace(" ","");
             if (categoryMap.containsKey(category)) {
                 filtered.add(categoryMap.get(category));
             }
@@ -245,6 +270,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
     //first latitude then longitude
     //Returns an double[2] array containing latitude and longitude as doubles
     private double[] parseLocationString(String locationString) {
+        locationString = locationString.replace(" ","");
         String[] latlng = locationString.split(",");
         String lat = latlng[0];
         String lng = latlng[1];
