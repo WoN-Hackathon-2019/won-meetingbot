@@ -3,7 +3,7 @@ This Bot can be integrated in order to find an adequate location for meeting up.
 
 How-To-Use (JSON):
 1. start chat with the bot
-2. write a message in the following form: /json "lat1,lng1;lat2,lng2;..;latN,lngN/<category>"
+2. write a message in the following form: `/json "lat1,lng1;lat2,lng2;..;latN,lngN/<category>"`
 3. the bot writes a message back with a stringified json object containing the data of the found venue
 
 category: pick a category from https://developer.foursquare.com/docs/resources/categories (english)
