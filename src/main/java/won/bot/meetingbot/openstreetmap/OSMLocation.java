@@ -84,6 +84,7 @@ public class OSMLocation {
             return null;
         }
 
+        logger.debug("We have a location: {}", result[0]);
         return result[0];
     }
 }
