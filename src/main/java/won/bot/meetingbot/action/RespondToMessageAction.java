@@ -143,8 +143,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
         } else {
             if(inMessage.charAt(0) == '/'){
                 try {
-                    inMessage = (String) engine.parse(inMessage);
-                    jsonFlag = true;
+                    return (String) engine.parse(inMessage);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
