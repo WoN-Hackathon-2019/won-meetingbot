@@ -68,11 +68,17 @@ public class RespondToMessageAction extends BaseEventBotAction {
         int i = 1;
         String coordinates = locationsToString(longitude, latitude);
         while (range <= 100000) {
-            FSVenueResult request =
-                    new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
-                            coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
-                            filteredCategoriesString).executeForObject(FSVenueResult.class);
-
+            FSVenueResult request;
+            if (filteredCategoriesString == null){
+                request =
+                        new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
+                                coordinates).withParameter("range", Integer.toString(range)).executeForObject(FSVenueResult.class);
+            }else {
+                request =
+                        new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
+                                coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
+                                filteredCategoriesString).executeForObject(FSVenueResult.class);
+            }
             //TODO: check if this null check really catches no returned results
             if (request != null) {
                 if (request.getMeta() != null) {
@@ -145,14 +151,21 @@ public class RespondToMessageAction extends BaseEventBotAction {
             }
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
-            String[] categories = parts[1].split(";");
-            logger.info("Searching for '{}'", Arrays.toString(categories));
-            ArrayList<String> filteredCategories = filterCategories(categories);
-            String filteredCategoriesString = createCategoriesString(filteredCategories);
+            String filteredCategoriesString= "";
+            if (parts.length > 2 ) {
+                return "Message could not be parsed. \nUse ',' to Split longitude and latitude Coordinates\n" +
+                        "';' to Split different coordinates and '/' to split between coordinates and category";
+            }else if (parts.length ==2) {
+                String[] categories = parts[1].split(";");
+                logger.info("Searching for '{}'", Arrays.toString(categories));
+                ArrayList<String> filteredCategories = filterCategories(categories);
+                filteredCategoriesString = createCategoriesString(filteredCategories);
+            }
             double[][] locations = new double[locationStrings.length][2];
             for (int i = 0; i < locationStrings.length; i++) {
                 locations[i] = parseLocationString(locationStrings[i]);
             }
+
             try {
                 double[] interpolLocation = interpolateLocations(locations);
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
@@ -257,6 +270,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
     //first latitude then longitude
     //Returns an double[2] array containing latitude and longitude as doubles
     private double[] parseLocationString(String locationString) {
+        locationString = locationString.replace(" ","");
         String[] latlng = locationString.split(",");
         String lat = latlng[0];
         String lng = latlng[1];
