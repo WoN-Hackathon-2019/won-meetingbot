@@ -1,5 +1,8 @@
 package won.bot.meetingbot.action;
 
+import at.apf.easycli.CliEngine;
+import at.apf.easycli.annotation.Command;
+import at.apf.easycli.impl.EasyEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.eventbot.EventListenerContext;
@@ -57,7 +60,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
         }
     }
 
-    private String coordinatesToHood(double longitude, double latitude, String filteredCategoriesString) throws Exception {
+    private String coordinatesToHood(double longitude, double latitude, String filteredCategoriesString, boolean jsonFlag) throws Exception {
         int range = 50;
         int i = 1;
         String coordinates = locationsToString(longitude, latitude);
@@ -79,9 +82,11 @@ public class RespondToMessageAction extends BaseEventBotAction {
                             String link =
                                     "(http://maps.google.com/maps?q=" + location.getLat() + "," + location.getLng() + ")";
                             Venue venue = new Venue(location, name);
-                            System.out.println("TEST");
                             System.out.println(venue.toJSON());
-                            return "We suggest you meet here:\n" + name + "\n" + address + link ;
+                            if (jsonFlag) {
+                                return venue.toJSON();
+                            }
+                            return "We suggest you meet here:\n" + name + "\n" + address + link;
                         }
 
                     }
@@ -106,9 +111,26 @@ public class RespondToMessageAction extends BaseEventBotAction {
     //Given a message containing lat and longitude of locations split by "/" and ";" returns a Message containing
     //informations regarding the best matching venue, else an error message
     private String createMessage(String inMessage) {
+        boolean jsonFlag = false;
+        CliEngine engine = new EasyEngine();
+        engine.register(new Object() {
+            @Command("/json")
+            String json(String message) {
+                logger.info("in /json engine");
+                return message;
+            }
+        });
         if (inMessage == null) {
             return "no message found";
         } else {
+            if(inMessage.charAt(0) == '/'){
+                try {
+                    inMessage = (String) engine.parse(inMessage);
+                    jsonFlag = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
             String[] categories = parts[1].split(";");
@@ -122,7 +144,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
             try {
                 double[] interpolLocation = interpolateLocations(locations);
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
-                String message = coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString);
+                String message = coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString, jsonFlag);
                 logger.info("Sending message: \"{}\"", message);
                 return message;
             } catch (Exception e) {
@@ -177,9 +199,6 @@ public class RespondToMessageAction extends BaseEventBotAction {
                         WonMessageBuilder.connectionMessage().sockets().sender(senderSocket).recipient(targetSocket).content().text(message).build();
                 ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
 
-                /*getEventListenerContext().getWonMessageSender()
-                        .prepareAndSendMessage(createWonMessage(connectionUri, message)); */
-
             } catch (Exception e) {
                 logger.warn("could not send message via connection {}", connectionUri, e);
             }
@@ -218,15 +237,6 @@ public class RespondToMessageAction extends BaseEventBotAction {
         logger.info("We have {} categories", map.size());
         return map;
     }
-    /*
-    private String locationsToString(double[][] locations){
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < locations.length; i++) {
-            sb.append("Location ").append(i).append(": ").append(locations[i][0]).append(",").append(locations[i][1])
-            .append("\n");
-        }
-        return sb.toString();
-    }*/
 
     private String locationsToString(double longitude, double latitude) {
         return longitude + "," + latitude;
