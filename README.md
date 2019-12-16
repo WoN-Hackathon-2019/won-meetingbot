@@ -3,14 +3,14 @@ This Bot can be integrated in order to find an adequate location for meeting up.
 
 ## How-To-Use (JSON):
 1. start chat with the bot
-2. write a message in the following form: `/json "lat1,lng1;lat2,lng2;..;latN,lngN/<category>"`
+2. write a message in the following form: e.g. ```/json "{\"locations\": [[48.202934, 16.354662], [48.200842, 16.382923]], \"categories\": [\"Socker Field\", \"Socker Stadium\"]}" ``` (first a list of locations ( a location is \[latitude, longitude]), then a list of categories (\[category1, category2..]))
 3. the bot writes a message back with a stringified json object containing the data of the found venue
 
-category: pick a category from https://developer.foursquare.com/docs/resources/categories (english)
+category: pick categories from https://developer.foursquare.com/docs/resources/categories (english)
 (e.g. for a soccer field pick "Socker Field")
 
 
-the json message has the following form:
+the returned json message has the following form:
 ```
 {
     "name": (String) <name of the venue>,

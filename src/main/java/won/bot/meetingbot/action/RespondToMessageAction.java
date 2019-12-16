@@ -3,6 +3,7 @@ package won.bot.meetingbot.action;
 import at.apf.easycli.CliEngine;
 import at.apf.easycli.annotation.Command;
 import at.apf.easycli.impl.EasyEngine;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.eventbot.EventListenerContext;
@@ -14,10 +15,12 @@ import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.meetingbot.Venue;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
 import won.bot.meetingbot.foursquare.*;
+import won.bot.meetingbot.impl.RequestMessage;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
@@ -122,8 +125,17 @@ public class RespondToMessageAction extends BaseEventBotAction {
         engine.register(new Object() {
             @Command("/json")
             String json(String message) {
-                logger.info("in /json engine");
-                return message;
+                RequestMessage m  = RequestMessage.parseJSON(message);
+                String outMessage;
+                try {
+                    double[] interpolLoc = interpolateLocations(m.getLocations());
+                    String filteredCategoriesString = createCategoriesString(filterCategories(m.getCategories()));
+                    outMessage = coordinatesToHood(interpolLoc[0], interpolLoc[1], filteredCategoriesString, true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    outMessage = "error in /json handling";
+                }
+                return outMessage;
             }
         });
         if (inMessage == null) {
@@ -131,8 +143,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
         } else {
             if(inMessage.charAt(0) == '/'){
                 try {
-                    inMessage = (String) engine.parse(inMessage);
-                    jsonFlag = true;
+                    return (String) engine.parse(inMessage);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
