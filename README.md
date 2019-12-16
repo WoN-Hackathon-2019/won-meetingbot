@@ -8,18 +8,20 @@ How-To-Use (JSON):
 
 category: pick a category from https://developer.foursquare.com/docs/resources/categories (english)
 (e.g. for a soccer field pick "Socker Field")
+
+
 the json message has the following form:
 ```
 {
-    "name": <name of the venue>,
-    "address": <street and house number>,
-    "city": <city>,
-    "country": <country>,
-    "postalCode": <postal code>,
-    "formattedAddress": <the most important address data formatted in a readable way>
-    "mapsLink": <the url of the place in google maps>
-    "longitude": <longitude>
-    "latitude": <latitude>
+    "name": (String) <name of the venue>,
+    "address": (String) <street and house number>,
+    "city": (String) <city>,
+    "country": (String) <country>,
+    "postalCode": (String) <postal code>,
+    "formattedAddress": (String) <the most important address data formatted in a readable way>
+    "mapsLink": (String) <the url of the place in google maps>
+    "longitude": (Double) <longitude>
+    "latitude": (Double) <latitude>
     
 }
 ```
