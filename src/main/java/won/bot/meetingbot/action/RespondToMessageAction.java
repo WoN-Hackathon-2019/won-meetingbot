@@ -163,11 +163,11 @@ public class RespondToMessageAction extends BaseEventBotAction {
                         "Stadtpark;Schwedenplatz;Landstraße;Herrengasse/Metro Station" //Stubentor
                 };
                 for (int i = 0; i < testcases.length; i++) {
-                    message.append("\nTestcase: ").append(i+1).append("\n")
+                    message.append("\n<b>Testcase:</b> ").append(i+1).append("\n")
                             .append("Request: ").append(testcases[i]).append("\n")
                             .append("Result: \n")
                             .append(createMessage(testcases[i]))
-                            .append("\n");
+                            .append("\n\n\n");
                 }
                 return message.toString();
             };
