@@ -170,6 +170,20 @@ public class RespondToMessageAction extends BaseEventBotAction {
                 }
                 return message.toString();
             };
+
+            @Command("/help")
+            String helpMessage(){
+                return
+                        "How to use the MeetingBot:\n"+
+                        "A request consists of atleast two locations given as either\n"+
+                        "double values for the longitude and the latitude separated by a ','\n"+
+                        "the values are separated by ';'\n"+
+                        "For Categorys use a '/' and list the categorys beyond\n"+
+                        "/help lists all available commands.\n"+
+                        "/test executes 5 requests to show how the Bot works\n"+
+                        "/Category lists the subcategorys of the given Category\n"+
+                        "/json returns a extensiv json containing data to the requested location";
+            }
         });
         if (inMessage == null) {
             return "no message found";
