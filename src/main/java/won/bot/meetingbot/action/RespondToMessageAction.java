@@ -112,7 +112,6 @@ public class RespondToMessageAction extends BaseEventBotAction {
         for (String category : filteredCategories) {
             sb.append(category).append(',');
         }
-        logger.info("XXX: {}, sb.length: {}, sb: '{}'", filteredCategories, sb.length(), sb.toString());
 
         if (sb.length() > 0) return sb.toString().substring(0, sb.length() - 1);
         return "";
@@ -198,7 +197,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
                     }
                 }
             }
-            logger.debug("LocationStrings: [{},{}]", locationStrings[0], locationStrings[1]);
+            logger.debug("LocationStrings: {}", Arrays.toString(locationStrings));
             String filteredCategoriesString= "";
             if (parts.length > 2 ) {
                 return "Message could not be parsed. \nUse ',' to Split longitude and latitude Coordinates\n" +
@@ -263,7 +262,6 @@ public class RespondToMessageAction extends BaseEventBotAction {
                 message = createMessage(null);
             }
             URI connectionUri = messageEvent.getConnectionURI();
-            logger.debug("sending message " + message);
             URI senderSocket = messageEvent.getSocketURI();
             URI targetSocket = messageEvent.getTargetSocketURI();
             try {
