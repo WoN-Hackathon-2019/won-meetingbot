@@ -47,7 +47,8 @@ the returned json message has the following form:
 }
 ```
 
-##Running the Bot yourself
+## Running the Bot yourself
+
 You can use the Bot just like the [Bot-Skeleton](https://github.com/researchstudio-sat/bot-skeleton).
 ## Collaboration
 We cooperated with the CoopTeam: 
