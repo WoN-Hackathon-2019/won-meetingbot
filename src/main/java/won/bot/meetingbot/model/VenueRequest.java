@@ -1,19 +1,19 @@
-package won.bot.meetingbot.impl;
+package won.bot.meetingbot.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 
-public class RequestMessage {
+public class VenueRequest {
     private String[] categories;
     private double[][] locations;
 
     @JsonIgnore
-    public static RequestMessage parseJSON(String jsonString) {
+    public static VenueRequest parseJSON(String jsonString) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            return mapper.readValue(jsonString, RequestMessage.class);
+            return mapper.readValue(jsonString, VenueRequest.class);
         } catch (IOException e) {
             e.printStackTrace();
         }

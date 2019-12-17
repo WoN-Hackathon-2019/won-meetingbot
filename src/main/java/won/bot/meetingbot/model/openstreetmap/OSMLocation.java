@@ -1,4 +1,4 @@
-package won.bot.meetingbot.openstreetmap;
+package won.bot.meetingbot.model.openstreetmap;
 
 
 import org.slf4j.Logger;

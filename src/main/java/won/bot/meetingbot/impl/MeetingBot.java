@@ -134,9 +134,8 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                         getEventListenerContext().getLinkedDataSource());
                 final DefaultAtomModelWrapper amw = new DefaultAtomModelWrapper(atomData);
                 if (amw.getAllTags().contains(API_TAG)) {
-                    logger.info("Found a new atom with tag 'locationapi'. Trying to establish a connection ...");
+                    logger.info("Found a new atom with tag '{}'. Trying to establish a connection ...", API_TAG);
                     // Open Connection to atom
-
 
                     Collection<URI> sockets = WonLinkedDataUtils.getSocketsOfType(e.getAtomURI(),
                             URI.create(WXCHAT.ChatSocketString), getEventListenerContext().getLinkedDataSource());

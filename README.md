@@ -9,7 +9,7 @@ You can use this bot either as a chatbot or integrate it into your service and h
 If you want to use categories for either situation you'll need to check what categories are supported:
 
 pick categories from https://developer.foursquare.com/docs/resources/categories (english)
-(e.g. for a soccer field pick "Socker Field")
+(e.g. for a soccer field pick "Soccer Field")
 or use the command /Category <search-term>  in the chat to find the available categories:
  
  e.g. ```/Category Soccer```

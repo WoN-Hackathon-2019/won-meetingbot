@@ -11,11 +11,11 @@ import won.bot.framework.eventbot.event.ConnectionSpecificEvent;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.MessageEvent;
 import won.bot.framework.eventbot.listener.EventListener;
-import won.bot.meetingbot.Venue;
+import won.bot.meetingbot.model.VenueResponse;
 import won.bot.meetingbot.context.MeetingBotContextWrapper;
-import won.bot.meetingbot.foursquare.*;
-import won.bot.meetingbot.impl.RequestMessage;
-import won.bot.meetingbot.openstreetmap.OSMLocation;
+import won.bot.meetingbot.model.foursquare.*;
+import won.bot.meetingbot.model.VenueRequest;
+import won.bot.meetingbot.model.openstreetmap.OSMLocation;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
@@ -32,9 +32,9 @@ import java.util.HashMap;
  * Can be configured to apply a timeout (non-blocking) before sending messages.
  */
 public class RespondToMessageAction extends BaseEventBotAction {
+
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private long millisTimeoutBeforeReply = 0;
-    //maps categoryName to Id;
     private HashMap<String, String> categoryMap;
 
     public RespondToMessageAction(EventListenerContext eventListenerContext) {
@@ -77,7 +77,6 @@ public class RespondToMessageAction extends BaseEventBotAction {
                         coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
                         filteredCategoriesString).executeForObject(FSVenueResult.class);
             }
-            //TODO: check if this null check really catches no returned results
             if (request != null) {
                 if (request.getMeta() != null) {
                     if (request.getMeta().getCode() == 200) {
@@ -87,7 +86,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
                             String address = location.getFormattedAddress().toString();
                             String link =
                                     "(http://maps.google.com/maps?q=" + location.getLat() + "," + location.getLng() + ")";
-                            Venue venue = new Venue(location, name);
+                            VenueResponse venue = new VenueResponse(location, name);
                             System.out.println(venue.toJSON());
                             if (jsonFlag) {
                                 return venue.toJSON();
@@ -141,7 +140,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
 
             @Command("/json")
             String json(String message) {
-                RequestMessage m = RequestMessage.parseJSON(message);
+                VenueRequest m = VenueRequest.parseJSON(message);
                 String outMessage;
                 try {
                     double[] interpolLoc = interpolateLocations(m.getLocations());

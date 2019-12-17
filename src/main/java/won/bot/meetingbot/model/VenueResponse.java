@@ -1,12 +1,12 @@
-package won.bot.meetingbot;
+package won.bot.meetingbot.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.codehaus.jackson.map.ObjectMapper;
-import won.bot.meetingbot.foursquare.FSLocation;
+import won.bot.meetingbot.model.foursquare.FSLocation;
 
 import java.io.IOException;
 
-public class Venue {
+public class VenueResponse {
     private String name;
     private String address;
     private String city;
@@ -19,8 +19,8 @@ public class Venue {
     private ObjectMapper mapper = new ObjectMapper();
 
     @JsonIgnore
-    public Venue(String name, String address, String city, String formattedAddress, String mapsLink, String country,
-                 String postalCode, double longitude, double latitude) {
+    public VenueResponse(String name, String address, String city, String formattedAddress, String mapsLink, String country,
+                         String postalCode, double longitude, double latitude) {
         this.name = name;
         this.address = address;
         this.city = city;
@@ -33,7 +33,7 @@ public class Venue {
     }
 
     @JsonIgnore
-    public Venue(FSLocation location, String name) {
+    public VenueResponse(FSLocation location, String name) {
         this.name = name;
         this.latitude = location.getLat();
         this.longitude = location.getLng();

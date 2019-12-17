@@ -1,4 +1,4 @@
-package won.bot.meetingbot.foursquare;
+package won.bot.meetingbot.model.foursquare;
 
 
 import java.util.List;
