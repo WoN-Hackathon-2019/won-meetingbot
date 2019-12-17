@@ -106,7 +106,15 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                 logger.info("EVENT: {}", event);
                 ConnectFromOtherAtomEvent con = (ConnectFromOtherAtomEvent) event;
                 ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(con.getRecipientSocket(),
-                        con.getSenderSocket(), "TEST");
+                        con.getSenderSocket(),
+                        "" +
+                                "Hi there, welcome to the meeting bot!\n" +
+                                "Just give me at least two addresses separated by a semicolon(;).\n" +
+                                "If you want a specific venue category just pass it after a slash(/).\n" +
+                                "If you want to search for a category, just write '/Category searchTerm'" +
+                                "E.g.: \nFriedrich-Schmidt-Platz 1, 1010 Wien;Museumsplatz 1, 1070 Wien;Heldenplatz ," +
+                                "1010 " +
+                                "Wien/Metro Station");
                 ctx.getEventBus().publish(connectCommandEvent);
 
 /*

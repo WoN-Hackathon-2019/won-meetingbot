@@ -126,7 +126,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
         engine.register(new Object() {
             @Command("/json")
             String json(String message) {
-                RequestMessage m  = RequestMessage.parseJSON(message);
+                RequestMessage m = RequestMessage.parseJSON(message);
                 String outMessage;
                 try {
                     double[] interpolLoc = interpolateLocations(m.getLocations());
@@ -137,6 +137,19 @@ public class RespondToMessageAction extends BaseEventBotAction {
                     outMessage = "error in /json handling";
                 }
                 return outMessage;
+            }
+
+            @Command("/Category")
+            String categories(String search) {
+                final StringBuilder builder = new StringBuilder();
+                categoryMap.keySet().forEach(s -> {
+                    if (s.toLowerCase().contains(search.toLowerCase())) {
+                        builder.append(s);
+                        builder.append("\n");
+                    }
+                });
+
+                return builder.toString();
             }
         });
         if (inMessage == null) {
