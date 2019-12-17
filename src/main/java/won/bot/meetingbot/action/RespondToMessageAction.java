@@ -157,8 +157,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
                 String[] testcases = {
                         "Schottentor; Museumsquartier/Metro Station", //Herrengasse
                         "48.215476, 16.364149;48.202577, 16.361445/Metro Station", //Herrengasse
-                        "/Category \"Metro Station\"", //works
-                        "Rathhaus Wien; Secession;Blockfabrik",
+                        "/Category Soccer", //works
                         "Stadtpark;Schwedenplatz;Landstraße/Metro Station",//Landstraße
                         "Stadtpark;Schwedenplatz;Landstraße;Herrengasse/Metro Station" //Stubentor
                 };
