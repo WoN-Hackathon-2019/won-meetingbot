@@ -17,8 +17,10 @@ public class Venue {
     private double longitude;
     private double latitude;
     private ObjectMapper mapper = new ObjectMapper();
+
     @JsonIgnore
-    public Venue(String name, String address, String city, String formattedAddress, String mapsLink, String country, String postalCode, double longitude, double latitude) {
+    public Venue(String name, String address, String city, String formattedAddress, String mapsLink, String country,
+                 String postalCode, double longitude, double latitude) {
         this.name = name;
         this.address = address;
         this.city = city;
@@ -31,7 +33,7 @@ public class Venue {
     }
 
     @JsonIgnore
-    public Venue(FSLocation location, String name){
+    public Venue(FSLocation location, String name) {
         this.name = name;
         this.latitude = location.getLat();
         this.longitude = location.getLng();
@@ -42,23 +44,6 @@ public class Venue {
         this.postalCode = location.getPostalCode();
         this.mapsLink = getMapsLink(latitude, longitude);
     }
-    @JsonIgnore
-    private String getMapsLink(double latitude, double longitude){
-        return "http://maps.google.com/maps?q=" + latitude + "," + longitude + "";
-    }
-    @JsonIgnore
-    public String toJSON() {
-        try {
-            return mapper.writeValueAsString(this);
-        }
-        catch(IOException e){
-            e.printStackTrace();
-        }
-        return null;
-    }
-    public String getName() {
-        return name;
-    }
 
     public String getAddress() {
         return address;
@@ -68,27 +53,46 @@ public class Venue {
         return city;
     }
 
+    public String getCountry() {
+        return country;
+    }
+
     public String getFormattedAddress() {
         return formattedAddress;
-    }
-
-    public String getMapsLink() {
-        return mapsLink;
-    }
-
-    public double getLongitude() {
-        return longitude;
     }
 
     public double getLatitude() {
         return latitude;
     }
 
-    public String getCountry() {
-        return country;
+    public double getLongitude() {
+        return longitude;
+    }
+
+    @JsonIgnore
+    private String getMapsLink(double latitude, double longitude) {
+        return "http://maps.google.com/maps?q=" + latitude + "," + longitude + "";
+    }
+
+    public String getMapsLink() {
+        return mapsLink;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getPostalCode() {
         return postalCode;
+    }
+
+    @JsonIgnore
+    public String toJSON() {
+        try {
+            return mapper.writeValueAsString(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

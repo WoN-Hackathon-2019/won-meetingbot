@@ -30,6 +30,14 @@ public class FSCategory {
     public FSCategory() {
     }
 
+    public List<FSCategory> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<FSCategory> categories) {
+        this.categories = categories;
+    }
+
     public String getId() {
         return id;
     }
@@ -60,14 +68,6 @@ public class FSCategory {
 
     public void setShortName(String shortName) {
         this.shortName = shortName;
-    }
-
-    public List<FSCategory> getCategories() {
-        return categories;
-    }
-
-    public void setCategories(List<FSCategory> categories) {
-        this.categories = categories;
     }
 
     @Override

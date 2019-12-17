@@ -23,10 +23,12 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
         super(eventListenerContext);
     }
 
-    @Override protected void doRun(Event event, EventListener executingListener) throws Exception {
+    @Override
+    protected void doRun(Event event, EventListener executingListener) throws Exception {
         EventListenerContext ctx = getEventListenerContext();
-        if(!(event instanceof MatcherExtensionAtomCreatedEvent) || !(getEventListenerContext().getBotContextWrapper() instanceof MeetingBotContextWrapper)) {
-            logger.error("MatcherExtensionAtomCreatedAction can only handle MatcherExtensionAtomCreatedEvent and only works with SkeletonBotContextWrapper");
+        if (!(event instanceof MatcherExtensionAtomCreatedEvent) || !(getEventListenerContext().getBotContextWrapper() instanceof MeetingBotContextWrapper)) {
+            logger.error("MatcherExtensionAtomCreatedAction can only handle MatcherExtensionAtomCreatedEvent and only" +
+                    " works with SkeletonBotContextWrapper");
             return;
         }
         MeetingBotContextWrapper botContextWrapper = (MeetingBotContextWrapper) ctx.getBotContextWrapper();
@@ -34,19 +36,14 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
 
         Map<URI, Set<URI>> connectedSocketsMapSet = botContextWrapper.getConnectedSockets();
 
-        for(Map.Entry<URI, Set<URI>> entry : connectedSocketsMapSet.entrySet()) {
+        for (Map.Entry<URI, Set<URI>> entry : connectedSocketsMapSet.entrySet()) {
             URI senderSocket = entry.getKey();
             Set<URI> targetSocketsSet = entry.getValue();
-            for(URI targetSocket : targetSocketsSet) {
-                logger.info("TODO: Send MSG("+senderSocket+"->"+targetSocket+") that we registered that an Atom was created, atomUri is: " +atomCreatedEvent.getAtomURI());
-                WonMessage wonMessage = WonMessageBuilder
-                                            .connectionMessage()
-                                            .sockets()
-                                            .sender(senderSocket)
-                                            .recipient(targetSocket)
-                                            .content()
-                                            .text("We registered that an Atom was created, atomUri is: " + atomCreatedEvent.getAtomURI())
-                                            .build();
+            for (URI targetSocket : targetSocketsSet) {
+                logger.info("TODO: Send MSG(" + senderSocket + "->" + targetSocket + ") that we registered that an " +
+                        "Atom was created, atomUri is: " + atomCreatedEvent.getAtomURI());
+                WonMessage wonMessage =
+                        WonMessageBuilder.connectionMessage().sockets().sender(senderSocket).recipient(targetSocket).content().text("We registered that an Atom was created, atomUri is: " + atomCreatedEvent.getAtomURI()).build();
                 ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
             }
         }

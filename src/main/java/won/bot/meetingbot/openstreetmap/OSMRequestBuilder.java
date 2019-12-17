@@ -17,22 +17,22 @@ public class OSMRequestBuilder {
         this.url = url;
     }
 
-    public OSMRequestBuilder withParameter(String parameter, String value) {
-        if(this.parameters.length() > 1) {
-            this.parameters += "&";
-        }
-        this.parameters += parameter + "=" + value;
-        return this;
+    public <T> T executeForObject(Class<T> responseType, Object... uriVariables) throws RestClientException {
+        logger.info("Requesting '{}'", this.url + this.parameters);
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.getForObject(this.url + this.parameters, responseType, uriVariables);
     }
 
     public OSMRequestBuilder withAddress(String address) {
         return this.withParameter("q", address);
     }
 
-    public <T> T executeForObject(Class<T> responseType, Object... uriVariables) throws RestClientException {
-        logger.info("Requesting '{}'", this.url + this.parameters);
-        RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(this.url + this.parameters, responseType, uriVariables);
+    public OSMRequestBuilder withParameter(String parameter, String value) {
+        if (this.parameters.length() > 1) {
+            this.parameters += "&";
+        }
+        this.parameters += parameter + "=" + value;
+        return this;
     }
 
 }

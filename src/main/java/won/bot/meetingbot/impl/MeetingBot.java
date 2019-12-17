@@ -1,13 +1,8 @@
 package won.bot.meetingbot.impl;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.util.Collection;
-
 import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import won.bot.framework.bot.base.EventBot;
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
@@ -31,28 +26,27 @@ import won.bot.framework.extensions.matcher.MatcherExtension;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
-import won.bot.meetingbot.context.MeetingBotContextWrapper;
 import won.bot.meetingbot.action.RespondToMessageAction;
-import won.protocol.message.WonMessage;
-import won.protocol.message.builder.WonMessageBuilder;
-import won.protocol.message.processor.impl.WonMessageSignerVerifier;
+import won.bot.meetingbot.context.MeetingBotContextWrapper;
 import won.protocol.util.DefaultAtomModelWrapper;
 import won.protocol.util.linkeddata.WonLinkedDataUtils;
 import won.protocol.vocabulary.WXCHAT;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+import java.util.Collection;
+
 public class MeetingBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private static final String OUR_ATOM_NAME = "our-atom";
+    private static final String API_TAG = "meetingapi";
     private int registrationMatcherRetryInterval;
     private MatcherBehaviour matcherBehaviour;
     private ServiceAtomBehaviour serviceAtomBehaviour;
-    private static final String OUR_ATOM_NAME = "our-atom";
-    private static final String API_TAG = "meetingapi";
 
-
-
-    // bean setter, used by spring
-    public void setRegistrationMatcherRetryInterval(final int registrationMatcherRetryInterval) {
-        this.registrationMatcherRetryInterval = registrationMatcherRetryInterval;
+    @Override
+    public MatcherBehaviour getMatcherBehaviour() {
+        return matcherBehaviour;
     }
 
     @Override
@@ -61,18 +55,13 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
     }
 
     @Override
-    public MatcherBehaviour getMatcherBehaviour() {
-        return matcherBehaviour;
-    }
-
-    @Override
     protected void initializeEventListeners() {
         logger.debug("initializeEventListeners");
         EventListenerContext ctx = getEventListenerContext();
         if (!(getBotContextWrapper() instanceof MeetingBotContextWrapper)) {
             logger.error(getBotContextWrapper().getBotName() + " does not work without a SkeletonBotContextWrapper");
-            throw new IllegalStateException(
-                            getBotContextWrapper().getBotName() + " does not work without a SkeletonBotContextWrapper");
+            throw new IllegalStateException(getBotContextWrapper().getBotName() + " does not work without a " +
+                    "SkeletonBotContextWrapper");
         }
         EventBus bus = getEventBus();
         MeetingBotContextWrapper botContextWrapper = (MeetingBotContextWrapper) getBotContextWrapper();
@@ -86,7 +75,7 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
 
 
         bus.subscribe(AtomCreatedEvent.class, event -> {
-            AtomCreatedEvent ev = (AtomCreatedEvent)event;
+            AtomCreatedEvent ev = (AtomCreatedEvent) event;
             logger.info("Our atom is @ https://hackathon.matchat.org/owner/#!/post/?postUri={}", ev.getAtomURI());
             getEventListenerContext().getBotContext().appendToNamedAtomUriList(ev.getAtomURI(), OUR_ATOM_NAME);
 
@@ -98,15 +87,15 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
         matcherBehaviour = new MatcherBehaviour(ctx, "BotSkeletonMatchingExtension", registrationMatcherRetryInterval);
         matcherBehaviour.activate();
         // create filters to determine which atoms the bot should react to
-        NotFilter noOwnAtoms = new NotFilter(
-                        new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
+        NotFilter noOwnAtoms = new NotFilter(new AtomUriInNamedListFilter(ctx,
+                ctx.getBotContextWrapper().getAtomCreateListName()));
         // filter to prevent reacting to serviceAtom<->ownedAtom events;
         NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
         NotFilter x = new NotFilter(event -> true);
         BaseEventListener autoResponder = new ActionOnEventListener(ctx, new RespondToMessageAction(ctx));
         bus.subscribe(MessageFromOtherAtomEvent.class, autoResponder);
-        bus.subscribe(CloseFromOtherAtomEvent.class,
-                new ActionOnEventListener(ctx, new LogAction(ctx, "received close message from remote atom.")));
+        bus.subscribe(CloseFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new LogAction(ctx, "received " +
+                "close message from remote atom.")));
 
         bus.subscribe(ConnectFromOtherAtomEvent.class, new BaseEventBotAction(ctx) {
             @Override
@@ -115,15 +104,11 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                 logger.info("EVENT: {}", event);
                 ConnectFromOtherAtomEvent con = (ConnectFromOtherAtomEvent) event;
                 ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(con.getRecipientSocket(),
-                        con.getSenderSocket(),
-                        "" +
-                                "Hi there, welcome to the meeting bot!\n" +
-                                "Just give me at least two addresses separated by a semicolon(;).\n" +
-                                "If you want a specific venue category just pass it after a slash(/).\n" +
-                                "If you want to search for a category, just write '/Category searchTerm'" +
-                                "E.g.: \nFriedrich-Schmidt-Platz 1, 1010 Wien;Museumsplatz 1, 1070 Wien;Heldenplatz ," +
-                                "1010 " +
-                                "Wien/Metro Station");
+                        con.getSenderSocket(), "" + "Hi there, welcome to the meeting bot!\n" + "Just give me at " +
+                        "least two addresses separated by a semicolon(;).\n" + "If you want a specific venue category" +
+                        " just pass it after a slash(/).\n" + "If you want to search for a category, just write " +
+                        "'/Category searchTerm'" + "E.g.: \nFriedrich-Schmidt-Platz 1, 1010 Wien;Museumsplatz 1, 1070" +
+                        " Wien;Heldenplatz ," + "1010 " + "Wien/Metro Station");
                 ctx.getEventBus().publish(connectCommandEvent);
 
 /*
@@ -144,8 +129,9 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                     return;
                 }
 
-                MatcherExtensionAtomCreatedEvent e = (MatcherExtensionAtomCreatedEvent)event;
-                Dataset atomData = WonLinkedDataUtils.getFullAtomDataset(e.getAtomURI(), getEventListenerContext().getLinkedDataSource());
+                MatcherExtensionAtomCreatedEvent e = (MatcherExtensionAtomCreatedEvent) event;
+                Dataset atomData = WonLinkedDataUtils.getFullAtomDataset(e.getAtomURI(),
+                        getEventListenerContext().getLinkedDataSource());
                 final DefaultAtomModelWrapper amw = new DefaultAtomModelWrapper(atomData);
                 if (amw.getAllTags().contains(API_TAG)) {
                     logger.info("Found a new atom with tag 'locationapi'. Trying to establish a connection ...");
@@ -153,10 +139,9 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
 
 
                     Collection<URI> sockets = WonLinkedDataUtils.getSocketsOfType(e.getAtomURI(),
-                            URI.create(WXCHAT.ChatSocketString),
-                            getEventListenerContext().getLinkedDataSource());
+                            URI.create(WXCHAT.ChatSocketString), getEventListenerContext().getLinkedDataSource());
                     //sockets should have 0 or 1 items
-                    if (sockets.isEmpty()){
+                    if (sockets.isEmpty()) {
                         //did not find a socket of that type
                         logger.error("Could not get chat socket of atomData: {}", atomData);
                         return;
@@ -166,16 +151,16 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
 
                     Collection<URI> mySockets =
                             WonLinkedDataUtils.getSocketsOfType(botContextWrapper.getServiceAtomUri(),
-                            URI.create(WXCHAT.ChatSocketString),
-                            getEventListenerContext().getLinkedDataSource());
+                                    URI.create(WXCHAT.ChatSocketString),
+                                    getEventListenerContext().getLinkedDataSource());
                     //sockets should have 0 or 1 items
-                    if (mySockets.isEmpty()){
+                    if (mySockets.isEmpty()) {
                         //did not find a socket of that type
                         logger.error("Could not get chat socket of atomData: {}", atomData);
                         return;
                     }
-                    ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
-                            mySockets.iterator().next(),target, "message");
+                    ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(mySockets.iterator().next(),
+                            target, "message");
                     getEventBus().publish(connectCommandEvent);
 
                 }
@@ -183,7 +168,7 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
         });
 
         bus.subscribe(ShutdownEvent.class, event -> {
-            ShutdownEvent shutdownEvent = (ShutdownEvent)event;
+            ShutdownEvent shutdownEvent = (ShutdownEvent) event;
             printAtoms(botContextWrapper);
         })
 /*        bus.subscribe(ConnectFromOtherAtomEvent.class, x, new BaseEventBotAction(ctx) {
@@ -193,7 +178,8 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                 EventListenerContext ctx = getEventListenerContext();
                 ConnectFromOtherAtomEvent connectFromOtherAtomEvent = (ConnectFromOtherAtomEvent) event;
                 try {
-                    String message = "Hello i am the MeetingBot! Please tell me two locations and I'll tell you a venue.";
+                    String message = "Hello i am the MeetingBot! Please tell me two locations and I'll tell you a
+                    venue.";
                     final ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
                                     connectFromOtherAtomEvent.getRecipientSocket(),
                                     connectFromOtherAtomEvent.getSenderSocket(), message);
@@ -201,7 +187,8 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                                     new CommandResultFilter(connectCommandEvent), new BaseEventBotAction(ctx) {
                                         @Override
                                         protected void doRun(Event event, EventListener executingListener) {
-                                            ConnectCommandResultEvent connectionMessageCommandResultEvent = (ConnectCommandResultEvent) event;
+                                            ConnectCommandResultEvent connectionMessageCommandResultEvent =
+                                            (ConnectCommandResultEvent) event;
                                             if (!connectionMessageCommandResultEvent.isSuccess()) {
                                                 logger.error("Failure when trying to open a received Request: "
                                                                 + connectionMessageCommandResultEvent.getMessage());
@@ -234,18 +221,22 @@ public class MeetingBot extends EventBot implements MatcherExtension, ServiceAto
                 CloseFromOtherAtomEvent closeFromOtherAtomEvent = (CloseFromOtherAtomEvent) event;
                 URI targetSocketUri = closeFromOtherAtomEvent.getSocketURI();
                 URI senderSocketUri = closeFromOtherAtomEvent.getTargetSocketURI();
-                logger.info("Remove a closed connection " + senderSocketUri + " -> " + targetSocketUri
-                                + " from the botcontext ");
+                logger.info("Remove a closed connection " + senderSocketUri + " -> " + targetSocketUri + " from the " +
+                        "botcontext ");
                 botContextWrapper.removeConnectedSocket(senderSocketUri, targetSocketUri);
             }
         });
     }
 
-
     private void printAtoms(MeetingBotContextWrapper botContextWrapper) {
         botContextWrapper.getConnectedSockets().forEach((uri, uris) -> {
             logger.debug("URI in connected sockets: {}", uri);
         });
+    }
+
+    // bean setter, used by spring
+    public void setRegistrationMatcherRetryInterval(final int registrationMatcherRetryInterval) {
+        this.registrationMatcherRetryInterval = registrationMatcherRetryInterval;
     }
 
 }

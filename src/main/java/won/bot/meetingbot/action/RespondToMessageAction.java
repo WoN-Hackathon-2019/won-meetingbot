@@ -3,7 +3,6 @@ package won.bot.meetingbot.action;
 import at.apf.easycli.CliEngine;
 import at.apf.easycli.annotation.Command;
 import at.apf.easycli.impl.EasyEngine;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.eventbot.EventListenerContext;
@@ -21,7 +20,6 @@ import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
@@ -64,21 +62,20 @@ public class RespondToMessageAction extends BaseEventBotAction {
         }
     }
 
-    private String coordinatesToHood(double longitude, double latitude, String filteredCategoriesString, boolean jsonFlag) throws Exception {
+    private String coordinatesToHood(double longitude, double latitude, String filteredCategoriesString,
+                                     boolean jsonFlag) throws Exception {
         int range = 50;
         int i = 1;
         String coordinates = locationsToString(longitude, latitude);
         while (range <= 100000) {
             FSVenueResult request;
-            if (filteredCategoriesString == null){
-                request =
-                        new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
-                                coordinates).withParameter("range", Integer.toString(range)).executeForObject(FSVenueResult.class);
-            }else {
-                request =
-                        new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
-                                coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
-                                filteredCategoriesString).executeForObject(FSVenueResult.class);
+            if (filteredCategoriesString == null) {
+                request = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
+                        coordinates).withParameter("range", Integer.toString(range)).executeForObject(FSVenueResult.class);
+            } else {
+                request = new FSRequestBuilder("https://api.foursquare.com/v2/venues/search").withParameter("ll",
+                        coordinates).withParameter("range", Integer.toString(range)).withParameter("categoryId",
+                        filteredCategoriesString).executeForObject(FSVenueResult.class);
             }
             //TODO: check if this null check really catches no returned results
             if (request != null) {
@@ -87,8 +84,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
                         if (request.getResponse().getVenues().size() > 0) {
                             String name = request.getResponse().getVenues().get(0).getName() + "\n";
                             FSLocation location = request.getResponse().getVenues().get(0).getLocation();
-                            String address =
-                                    location.getFormattedAddress().toString();
+                            String address = location.getFormattedAddress().toString();
                             String link =
                                     "(http://maps.google.com/maps?q=" + location.getLat() + "," + location.getLng() + ")";
                             Venue venue = new Venue(location, name);
@@ -123,6 +119,26 @@ public class RespondToMessageAction extends BaseEventBotAction {
         boolean jsonFlag = false;
         CliEngine engine = new EasyEngine();
         engine.register(new Object() {
+            @Command("/Category")
+            String categories(String search) {
+                final StringBuilder builder = new StringBuilder();
+                categoryMap.keySet().forEach(s -> {
+                    if (s.toLowerCase().contains(search.toLowerCase())) {
+                        builder.append(s);
+                        builder.append("\n");
+                    }
+                });
+
+                return builder.toString();
+            }
+
+            @Command("/help")
+            String helpMessage() {
+                return "How to use the MeetingBot:\n" + "A request consists of atleast two locations given as " +
+                        "either\n" + "double values for the longitude and the latitude separated by a ','\n" + "the " +
+                        "values are separated by ';'\n" + "For Categorys use a '/' and list the categorys beyond\n" + "/help lists all available commands.\n" + "/test executes 5 requests to show how the Bot works\n" + "/Category lists the subcategorys of the given Category\n" + "/json returns a extensiv json containing data to the requested location";
+            }
+
             @Command("/json")
             String json(String message) {
                 RequestMessage m = RequestMessage.parseJSON(message);
@@ -138,56 +154,25 @@ public class RespondToMessageAction extends BaseEventBotAction {
                 return outMessage;
             }
 
-            @Command("/Category")
-            String categories(String search) {
-                final StringBuilder builder = new StringBuilder();
-                categoryMap.keySet().forEach(s -> {
-                    if (s.toLowerCase().contains(search.toLowerCase())) {
-                        builder.append(s);
-                        builder.append("\n");
-                    }
-                });
-
-                return builder.toString();
-            }
             @Command("/test")
             String testMessage() {
                 StringBuilder message = new StringBuilder("Tried following testcases:\n");
-                String[] testcases = {
-                        "Schottentor; Museumsquartier/Metro Station", //Herrengasse
+                String[] testcases = {"Schottentor; Museumsquartier/Metro Station", //Herrengasse
                         "48.215476, 16.364149;48.202577, 16.361445/Metro Station", //Herrengasse
                         "/Category Soccer", //works
                         "Stadtpark;Schwedenplatz;Landstraße/Metro Station",//Landstraße
                         "Stadtpark;Schwedenplatz;Landstraße;Herrengasse/Metro Station" //Stubentor
                 };
                 for (int i = 0; i < testcases.length; i++) {
-                    message.append("\n<b>Testcase:</b> ").append(i+1).append("\n")
-                            .append("Request: ").append(testcases[i]).append("\n")
-                            .append("Result: \n")
-                            .append(createMessage(testcases[i]))
-                            .append("\n \n \n");
+                    message.append("\n<b>Testcase:</b> ").append(i + 1).append("\n").append("Request: ").append(testcases[i]).append("\n").append("Result: \n").append(createMessage(testcases[i])).append("\n \n \n");
                 }
                 return message.toString();
-            };
-
-            @Command("/help")
-            String helpMessage(){
-                return
-                        "How to use the MeetingBot:\n"+
-                        "A request consists of atleast two locations given as either\n"+
-                        "double values for the longitude and the latitude separated by a ','\n"+
-                        "the values are separated by ';'\n"+
-                        "For Categorys use a '/' and list the categorys beyond\n"+
-                        "/help lists all available commands.\n"+
-                        "/test executes 5 requests to show how the Bot works\n"+
-                        "/Category lists the subcategorys of the given Category\n"+
-                        "/json returns a extensiv json containing data to the requested location";
             }
         });
         if (inMessage == null) {
             return "no message found";
         } else {
-            if(inMessage.charAt(0) == '/'){
+            if (inMessage.charAt(0) == '/') {
                 try {
                     return (String) engine.parse(inMessage);
                 } catch (Exception e) {
@@ -197,25 +182,26 @@ public class RespondToMessageAction extends BaseEventBotAction {
 
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
-            for (int i = 0; i < locationStrings.length ; i++) {
-                while (locationStrings[i].charAt(0) == ' '){
+            for (int i = 0; i < locationStrings.length; i++) {
+                while (locationStrings[i].charAt(0) == ' ') {
                     locationStrings[i] = locationStrings[i].substring(1);
                 }
-                if ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".contains(locationStrings[i].substring(0, 1))) {
+                if ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".contains(locationStrings[i].substring(0,
+                        1))) {
                     OSMLocation locationOfAddress = OSMLocation.getLocationForAddress(locationStrings[i]);
                     try {
                         locationStrings[i] = locationOfAddress.getLat() + "," + locationOfAddress.getLon();
-                    }catch (NullPointerException e){
+                    } catch (NullPointerException e) {
                         return "OOPSIE Something went wrong" + e.getMessage();
                     }
                 }
             }
             logger.debug("LocationStrings: {}", Arrays.toString(locationStrings));
-            String filteredCategoriesString= "";
-            if (parts.length > 2 ) {
-                return "Message could not be parsed. \nUse ',' to Split longitude and latitude Coordinates\n" +
-                        "';' to Split different coordinates and '/' to split between coordinates and category";
-            }else if (parts.length ==2) {
+            String filteredCategoriesString = "";
+            if (parts.length > 2) {
+                return "Message could not be parsed. \nUse ',' to Split longitude and latitude Coordinates\n" + "';' " +
+                        "to Split different coordinates and '/' to split between coordinates and category";
+            } else if (parts.length == 2) {
                 String[] categories = parts[1].split(";");
                 logger.info("Searching for '{}'", Arrays.toString(categories));
                 ArrayList<String> filteredCategories = filterCategories(categories);
@@ -229,7 +215,8 @@ public class RespondToMessageAction extends BaseEventBotAction {
             try {
                 double[] interpolLocation = interpolateLocations(locations);
                 //return locationsToString(interpolLocation[0],interpolLocation[1]);
-                String message = coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString, jsonFlag);
+                String message = coordinatesToHood(interpolLocation[0], interpolLocation[1], filteredCategoriesString
+                        , jsonFlag);
                 logger.info("Sending message: \"{}\"", message);
                 return message;
             } catch (Exception e) {
@@ -255,7 +242,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
     private ArrayList<String> filterCategories(String[] categories) {
         ArrayList<String> filtered = new ArrayList<>();
         for (String category : categories) {
-            if (category.charAt(0) == ' '){
+            if (category.charAt(0) == ' ') {
                 category = category.substring(1);
             }
             if (categoryMap.containsKey(category)) {
@@ -332,7 +319,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
     //first latitude then longitude
     //Returns an double[2] array containing latitude and longitude as doubles
     private double[] parseLocationString(String locationString) {
-        locationString = locationString.replace(" ","");
+        locationString = locationString.replace(" ", "");
         String[] latlng = locationString.split(",");
         String lat = latlng[0];
         String lng = latlng[1];

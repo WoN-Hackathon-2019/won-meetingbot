@@ -20,19 +20,19 @@ public class RequestMessage {
         return null;
     }
 
-    public void setCategories(String[] categories) {
-        this.categories = categories;
-    }
-
-    public void setLocations(double[][] locations) {
-        this.locations = locations;
-    }
-
     public String[] getCategories() {
         return categories;
     }
 
+    public void setCategories(String[] categories) {
+        this.categories = categories;
+    }
+
     public double[][] getLocations() {
         return locations;
+    }
+
+    public void setLocations(double[][] locations) {
+        this.locations = locations;
     }
 }

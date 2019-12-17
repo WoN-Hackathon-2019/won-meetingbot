@@ -32,12 +32,24 @@ public class OSMLocation {
     private String lon;
     private String display_name;
 
-    public String getPlace_id() {
-        return place_id;
+    public static OSMLocation getLocationForAddress(String address) {
+        OSMLocation[] result = new OSMRequestBuilder("https://nominatim.openstreetmap.org/search?format=json" +
+                "&addressdetails=0&q=" + address).executeForObject(OSMLocation[].class);
+        if (result.length == 0) {
+            logger.error("Could not find location for address: '{}'", address);
+            return null;
+        }
+
+        logger.debug("We have a location: {}", result[0]);
+        return result[0];
     }
 
-    public void setPlace_id(String place_id) {
-        this.place_id = place_id;
+    public String getDisplay_name() {
+        return display_name;
+    }
+
+    public void setDisplay_name(String display_name) {
+        this.display_name = display_name;
     }
 
     public String getLat() {
@@ -56,12 +68,12 @@ public class OSMLocation {
         this.lon = lon;
     }
 
-    public String getDisplay_name() {
-        return display_name;
+    public String getPlace_id() {
+        return place_id;
     }
 
-    public void setDisplay_name(String display_name) {
-        this.display_name = display_name;
+    public void setPlace_id(String place_id) {
+        this.place_id = place_id;
     }
 
     @Override
@@ -73,18 +85,5 @@ public class OSMLocation {
         sb.append(", display_name='").append(display_name).append('\'');
         sb.append('}');
         return sb.toString();
-    }
-
-    public static OSMLocation getLocationForAddress(String address) {
-        OSMLocation[] result =
-                new OSMRequestBuilder("https://nominatim.openstreetmap.org/search?format=json" +
-                        "&addressdetails=0&q=" + address).executeForObject(OSMLocation[].class);
-        if (result.length == 0) {
-            logger.error("Could not find location for address: '{}'", address);
-            return null;
-        }
-
-        logger.debug("We have a location: {}", result[0]);
-        return result[0];
     }
 }
