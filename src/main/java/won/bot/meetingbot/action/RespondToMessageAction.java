@@ -155,10 +155,12 @@ public class RespondToMessageAction extends BaseEventBotAction {
             String testMessage() {
                 StringBuilder message = new StringBuilder("Tried following testcases:\n");
                 String[] testcases = {
-
-                        "/Categorys Metro Station", //works
-                        "48.197112, 16.339042;48.200314, 16.371004;48.180031, 16.357105/", //Westbahnhof, Resselpark, Matzleinsdorferplatz
-                        "48.197112, 16.339042;48.200314, 16.371004/Metro Station"
+                        "Schottentor; Museumsquartier/Metro Station", //Herrengasse
+                        "48.215476, 16.364149;48.202577, 16.361445/Metro Station", //Herrengasse
+                        "/Category \"Metro Station\"", //works
+                        "Rathhaus Wien; Secession;Blockfabrik",
+                        "Stadtpark;Schwedenplatz;Landstraße/Metro Station",//Landstraße
+                        "Stadtpark;Schwedenplatz;Landstraße;Herrengasse/Metro Station" //Stubentor
                 };
                 for (int i = 0; i < testcases.length; i++) {
                     message.append("Testcase: ").append(i).append("\n").append(testcases[i]).append("\n");
@@ -181,6 +183,9 @@ public class RespondToMessageAction extends BaseEventBotAction {
             String[] parts = inMessage.split("/");
             String[] locationStrings = parts[0].split(";");
             for (int i = 0; i < locationStrings.length ; i++) {
+                while (locationStrings[i].charAt(0) == ' '){
+                    locationStrings[i] = locationStrings[i].substring(1);
+                }
                 if ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".contains(locationStrings[i].substring(0, 1))) {
                     OSMLocation locationOfAddress = OSMLocation.getLocationForAddress(locationStrings[i]);
                     try {
