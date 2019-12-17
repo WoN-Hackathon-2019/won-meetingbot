@@ -155,12 +155,10 @@ public class RespondToMessageAction extends BaseEventBotAction {
             String testMessage() {
                 StringBuilder message = new StringBuilder("Tried following testcases:\n");
                 String[] testcases = {
-                        "48.186394, 16.373182; 48.200869, 16.369019/Metro Station", //Taubstummengasse
-                        "Pilgramgasse; Karlsplatz/Metro Station", // Kettenbrückengasse?
-                        "/json 48.202934, 16.354662;48.200842, 16.382923/Socker Field",//README
-                        "/Categorys Metro Station",
+
+                        "/Categorys Metro Station", //works
                         "48.197112, 16.339042;48.200314, 16.371004;48.180031, 16.357105/", //Westbahnhof, Resselpark, Matzleinsdorferplatz
-                        "48.197112, 16.339042;48.200314, 16.371004; Matzleinsdorferplatz/Metro Station"
+                        "48.197112, 16.339042;48.200314, 16.371004/Metro Station"
                 };
                 for (int i = 0; i < testcases.length; i++) {
                     message.append("Testcase: ").append(i).append("\n").append(testcases[i]).append("\n");
