@@ -165,7 +165,7 @@ public class RespondToMessageAction extends BaseEventBotAction {
                             .append("Request: ").append(testcases[i]).append("\n")
                             .append("Result: \n")
                             .append(createMessage(testcases[i]))
-                            .append("\n\n\n");
+                            .append("\n \n \n");
                 }
                 return message.toString();
             };
